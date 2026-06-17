@@ -9,7 +9,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 function getApiKey(): string {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEYY;
   if (!key) {
     const isNetlify = Boolean(process.env.NETLIFY);
     throw new Error(
