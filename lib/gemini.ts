@@ -11,8 +11,11 @@ import { GoogleGenAI } from "@google/genai";
 function getApiKey(): string {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
+    const isNetlify = Boolean(process.env.NETLIFY);
     throw new Error(
-      "GEMINI_API_KEY is missing. Copy env.example to .env.local and add your key."
+      isNetlify
+        ? "GEMINI_API_KEY is missing. Add it in Netlify → Site configuration → Environment variables, then redeploy."
+        : "GEMINI_API_KEY is missing. Copy env.example to .env.local and add your key."
     );
   }
   return key;
@@ -27,6 +30,7 @@ export function getGeminiClient(): GoogleGenAI {
   }
   return client;
 }
+
 
 /**
  * Model used for translation.

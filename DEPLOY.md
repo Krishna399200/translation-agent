@@ -11,7 +11,7 @@ The key is **not** in git. Add it in Netlify:
 
 1. Open [Site settings → Environment variables](https://app.netlify.com/projects/translation-agent-sai/configuration/env)
 2. Add:
-   - `GEMINI_API_KEY` = your key from [AI Studio](https://aistudio.google.com/apikey)
+   - `GEMINI_API_KEYY` = your key from [AI Studio](https://aistudio.google.com/apikey)
    - Optional: `GEMINI_MODEL` = `gemini-2.5-flash-lite`
 
 ## 2. Push to GitHub
