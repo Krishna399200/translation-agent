@@ -51,7 +51,7 @@ export default function RootLayout({
       lang="en"
       className={`${nunito.variable} ${quicksand.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
         <RegisterServiceWorker />
       </body>
