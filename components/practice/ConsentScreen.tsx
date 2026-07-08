@@ -2,8 +2,8 @@ import Button from "@/components/Button";
 
 export default function ConsentScreen({ onConsent }: { onConsent: () => void }) {
   return (
-    <div className="fade-in mx-auto w-full max-w-sm rounded-2xl border border-teal-100 bg-card px-6 py-8 shadow-soft">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-teal-700">
+    <div className="fade-in frosted-card mx-auto w-full max-w-sm rounded-2xl px-6 py-8">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-ink">
         Before we record
       </h2>
       <p className="mt-4 text-ink-soft">

@@ -7,6 +7,7 @@ export type RecorderStatus = "idle" | "requesting" | "recording" | "stopped" | "
 export function useAudioRecorder() {
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -17,11 +18,12 @@ export function useAudioRecorder() {
     setError(null);
     setStatus("requesting");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = mediaStream;
+      setStream(mediaStream);
       chunksRef.current = [];
 
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(mediaStream);
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (e) => {
@@ -54,6 +56,7 @@ export function useAudioRecorder() {
         const durationSeconds = (performance.now() - startTimeRef.current) / 1000;
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
         streamRef.current?.getTracks().forEach((track) => track.stop());
+        setStream(null);
         const result = { blob, durationSeconds };
         resultRef.current = result;
         setStatus("stopped");
@@ -67,9 +70,10 @@ export function useAudioRecorder() {
   const reset = useCallback(() => {
     setStatus("idle");
     setError(null);
+    setStream(null);
     chunksRef.current = [];
     resultRef.current = null;
   }, []);
 
-  return { status, error, start, stop, reset };
+  return { status, error, stream, start, stop, reset };
 }

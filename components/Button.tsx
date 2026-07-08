@@ -5,11 +5,10 @@ import { ButtonHTMLAttributes } from "react";
 type Variant = "primary" | "secondary" | "ghost";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary:
-    "bg-teal-500 text-cream hover:bg-teal-600 disabled:bg-teal-300 shadow-soft",
+  primary: "btn-glow disabled:cursor-not-allowed",
   secondary:
-    "bg-card text-teal-700 border border-teal-100 hover:bg-teal-50 disabled:opacity-50",
-  ghost: "text-teal-600 hover:bg-teal-50 disabled:opacity-50",
+    "frosted-card text-ink hover:border-teal-500/40 disabled:opacity-50",
+  ghost: "text-teal-300 hover:bg-white/5 disabled:opacity-50",
 };
 
 export default function Button({

@@ -20,9 +20,9 @@ export default function WaveformPlayer({ url, compact = false }: { url: string; 
         container: containerRef.current,
         url,
         height: compact ? 36 : 56,
-        waveColor: "#d8e6e4",
-        progressColor: "#4f7c82",
-        cursorColor: "#d9a441",
+        waveColor: "rgba(255,255,255,0.18)",
+        progressColor: "#6fd7c8",
+        cursorColor: "#e0b34a",
         cursorWidth: 2,
         barWidth: 2,
         barGap: 2,
@@ -50,7 +50,7 @@ export default function WaveformPlayer({ url, compact = false }: { url: string; 
         onClick={() => waveRef.current?.playPause()}
         disabled={!ready}
         aria-label={playing ? "Pause" : "Play"}
-        className="press flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-500 text-cream disabled:opacity-40"
+        className="press flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-500 text-void-deep disabled:opacity-40"
       >
         {playing ? (
           <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">

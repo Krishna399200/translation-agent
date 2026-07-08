@@ -30,7 +30,7 @@ export default function DeleteRecordingButton({
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="press font-semibold text-teal-700 underline"
+          className="press font-semibold text-mood-difficult underline"
         >
           {deleting ? "Removing..." : "Yes, remove it"}
         </button>

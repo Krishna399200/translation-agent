@@ -55,7 +55,7 @@ export default function TrendChart({ points }: { points: Point[] }) {
           y1={PAD_Y + plotH}
           x2={WIDTH - PAD_X}
           y2={PAD_Y + plotH}
-          stroke="var(--color-teal-100)"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth={1}
         />
 
@@ -69,7 +69,7 @@ export default function TrendChart({ points }: { points: Point[] }) {
             cy={c.y}
             r={i === coords.length - 1 ? 5 : 4}
             fill={i === coords.length - 1 ? "var(--color-gold-500)" : "var(--color-teal-500)"}
-            stroke="var(--color-card)"
+            stroke="var(--color-void)"
             strokeWidth={2}
             onMouseEnter={() => setHoverIndex(i)}
             className="cursor-pointer"
@@ -88,7 +88,7 @@ export default function TrendChart({ points }: { points: Point[] }) {
 
       {active && (
         <div
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-lg bg-ink px-2 py-1 text-xs text-cream shadow-soft"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-lg bg-void-deep px-2 py-1 text-xs text-ink shadow-soft"
           style={{ left: `${(active.x / WIDTH) * 100}%`, top: `${(active.y / HEIGHT) * 100}%` }}
         >
           {new Date(active.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {active.rating}

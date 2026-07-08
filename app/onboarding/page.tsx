@@ -45,12 +45,13 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-16">
+    <main className="bg-focused flex min-h-dvh flex-col items-center justify-center px-6 py-16">
+      <div className="glow-orb" style={{ "--glow-color": "var(--color-lavender-500)" } as React.CSSProperties} />
       <form
         onSubmit={handleSubmit}
-        className="fade-in w-full max-w-sm rounded-2xl border border-teal-100 bg-card px-6 py-8 shadow-soft"
+        className="fade-in frosted-card relative z-10 w-full max-w-sm rounded-2xl px-6 py-8"
       >
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-teal-700">
+        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-ink">
           Let&apos;s set up your space
         </h1>
         <p className="mt-2 text-ink-soft">
@@ -66,7 +67,7 @@ export default function OnboardingPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="mt-2 w-full rounded-full border border-teal-100 bg-cream px-5 py-3 text-ink outline-none focus:border-teal-500"
+          className="mt-2 w-full rounded-full border border-white/10 bg-black/20 px-5 py-3 text-ink outline-none placeholder:text-ink-faint focus:border-teal-500/50"
         />
 
         <label className="mt-8 block text-sm font-medium text-ink">
@@ -84,7 +85,7 @@ export default function OnboardingPage() {
             onChange={(e) => setConfidence(Number(e.target.value))}
             className="flex-1 accent-teal-500"
           />
-          <span className="w-8 text-center font-[family-name:var(--font-display)] text-xl font-bold text-teal-600">
+          <span className="w-8 text-center font-[family-name:var(--font-display)] text-xl font-bold text-teal-300">
             {confidence}
           </span>
         </div>
@@ -93,7 +94,7 @@ export default function OnboardingPage() {
           {saving ? "Getting your space ready..." : "Begin"}
         </Button>
 
-        {error && <p className="mt-4 text-sm text-teal-700">{error}</p>}
+        {error && <p className="mt-4 text-sm text-mood-difficult">{error}</p>}
       </form>
     </main>
   );

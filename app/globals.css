@@ -1,61 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --color-cream: #faf6ee;
-  --color-cream-deep: #f2ead9;
-  --color-card: #fffdf8;
+  /* Base surfaces — near-black with a faint blue undertone, never flat black */
+  --color-void: #0b0f14;
+  --color-void-deep: #070a0d;
+  --color-panel: #11161d;
+  --color-dashboard: #0f1620;
+  --color-dashboard-deep: #0b1119;
 
-  --color-ink: #3a352f;
-  --color-ink-soft: #6b6156;
-  --color-ink-faint: #9a9082;
+  --color-card: rgba(255, 255, 255, 0.045);
+  --color-card-border: rgba(255, 255, 255, 0.09);
+  --color-card-border-strong: rgba(255, 255, 255, 0.16);
 
-  --color-teal-50: #eef4f3;
+  --color-ink: #eef2f4;
+  --color-ink-soft: #a7b0b8;
+  --color-ink-faint: #6d7680;
+
+  /* Glow accents */
   --color-teal-100: #d8e6e4;
-  --color-teal-300: #9dc0bd;
-  --color-teal-500: #4f7c82;
-  --color-teal-600: #3e6469;
-  --color-teal-700: #2f4d51;
+  --color-teal-300: #6fd7c8;
+  --color-teal-500: #2fb8a6;
+  --color-teal-600: #23907f;
+  --color-teal-700: #1a6d60;
 
-  --color-sage-100: #e7ecdd;
-  --color-sage-300: #bccca8;
-  --color-sage-500: #8fa87f;
-  --color-sage-600: #71895f;
+  --color-sage-300: #9fd9ab;
+  --color-sage-500: #5fbf78;
 
-  --color-sand-100: #f3e9d4;
+  --color-sand-100: rgba(217, 178, 115, 0.12);
   --color-sand-300: #e6d3ab;
   --color-sand-500: #d3b273;
 
-  --color-lavender-100: #ece5f3;
-  --color-lavender-300: #cdbbdf;
-  --color-lavender-500: #a98fc4;
+  --color-lavender-100: rgba(169, 143, 196, 0.14);
+  --color-lavender-300: #b7a2d8;
+  --color-lavender-500: #9b7fc4;
 
   --color-gold-300: #ecd291;
-  --color-gold-500: #d9a441;
-  --color-gold-600: #b88530;
+  --color-gold-500: #e0b34a;
+  --color-gold-600: #c99427;
 
-  --shadow-soft: 0 12px 32px -12px rgba(58, 53, 47, 0.18);
+  --color-blue-400: #5cc2e8;
+  --color-blue-500: #3fa4d6;
+
+  /* Sentiment scale — muted, never alarm-saturated */
+  --color-mood-difficult: #d97a6c;
+  --color-mood-challenging: #d9a06a;
+  --color-mood-neutral: #d9c66a;
+  --color-mood-good: #93c97a;
+  --color-mood-effortless: #5fd6c4;
+
+  --shadow-soft: 0 12px 32px -12px rgba(0, 0, 0, 0.5);
+  --shadow-glow-teal: 0 0 40px -8px rgba(47, 184, 166, 0.45);
+  --shadow-glow-gold: 0 0 32px -8px rgba(224, 179, 74, 0.4);
 }
 
 @theme inline {
-  --color-cream: var(--color-cream);
-  --color-cream-deep: var(--color-cream-deep);
+  --color-void: var(--color-void);
+  --color-void-deep: var(--color-void-deep);
+  --color-panel: var(--color-panel);
+  --color-dashboard: var(--color-dashboard);
+  --color-dashboard-deep: var(--color-dashboard-deep);
+
   --color-card: var(--color-card);
+  --color-card-border: var(--color-card-border);
 
   --color-ink: var(--color-ink);
   --color-ink-soft: var(--color-ink-soft);
   --color-ink-faint: var(--color-ink-faint);
 
-  --color-teal-50: var(--color-teal-50);
   --color-teal-100: var(--color-teal-100);
   --color-teal-300: var(--color-teal-300);
   --color-teal-500: var(--color-teal-500);
   --color-teal-600: var(--color-teal-600);
   --color-teal-700: var(--color-teal-700);
 
-  --color-sage-100: var(--color-sage-100);
   --color-sage-300: var(--color-sage-300);
   --color-sage-500: var(--color-sage-500);
-  --color-sage-600: var(--color-sage-600);
 
   --color-sand-100: var(--color-sand-100);
   --color-sand-300: var(--color-sand-300);
@@ -69,22 +88,21 @@
   --color-gold-500: var(--color-gold-500);
   --color-gold-600: var(--color-gold-600);
 
+  --color-blue-400: var(--color-blue-400);
+  --color-blue-500: var(--color-blue-500);
+
+  --color-mood-difficult: var(--color-mood-difficult);
+  --color-mood-challenging: var(--color-mood-challenging);
+  --color-mood-neutral: var(--color-mood-neutral);
+  --color-mood-good: var(--color-mood-good);
+  --color-mood-effortless: var(--color-mood-effortless);
+
   --font-sans: var(--font-nunito), ui-rounded, "Segoe UI", sans-serif;
   --font-display: var(--font-quicksand), ui-rounded, "Segoe UI", sans-serif;
 
   --shadow-soft: var(--shadow-soft);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-cream: #262322;
-    --color-cream-deep: #1d1b1a;
-    --color-card: #2e2b28;
-
-    --color-ink: #f1ece2;
-    --color-ink-soft: #cabfae;
-    --color-ink-faint: #948b7c;
-  }
+  --shadow-glow-teal: var(--shadow-glow-teal);
+  --shadow-glow-gold: var(--shadow-glow-gold);
 }
 
 * {
@@ -93,10 +111,11 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
-  background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-cream-deep) 100%);
+  background: var(--color-void);
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.65;
@@ -104,12 +123,83 @@ body {
 }
 
 ::selection {
-  background: var(--color-sand-300);
+  background: var(--color-teal-600);
   color: var(--color-ink);
 }
 
 button {
   font-family: inherit;
+}
+
+/* Frosted glass card — the one card style used everywhere */
+.frosted-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Dashboard-style screens (Home, Progress, Settings): softer, blue-gray, less void-black */
+.bg-dashboard {
+  background: radial-gradient(ellipse 80% 60% at 30% 0%, rgba(47, 184, 166, 0.09), transparent 60%),
+    linear-gradient(180deg, var(--color-dashboard) 0%, var(--color-dashboard-deep) 100%);
+}
+
+/* Focused session screens (practice/mantra/varnamala/trigger words): near-black + glow orb */
+.bg-focused {
+  background: var(--color-void);
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-orb {
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(60px);
+  opacity: 0.55;
+}
+
+.glow-orb::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70vmin;
+  height: 70vmin;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-color, var(--color-teal-500)) 0%, transparent 70%);
+  animation: orbBreathe 6s ease-in-out infinite;
+}
+
+@keyframes orbBreathe {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* Primary CTA — teal-to-blue glow gradient */
+.btn-glow {
+  background: linear-gradient(135deg, var(--color-teal-500), var(--color-blue-500));
+  color: var(--color-void-deep);
+  box-shadow: var(--shadow-glow-teal);
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 48px -6px rgba(47, 184, 166, 0.6);
+}
+
+.btn-glow:disabled {
+  opacity: 0.45;
+  box-shadow: none;
 }
 
 .press {
@@ -147,5 +237,19 @@ button {
   50% {
     transform: scale(1.12);
     opacity: 0.9;
+  }
+}
+
+/* Slow breathing pulse used by the shared BreathingTransition orb */
+.breathe-pulse {
+  animation: breathePulse 5s ease-in-out infinite;
+}
+
+@keyframes breathePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }

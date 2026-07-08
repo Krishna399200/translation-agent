@@ -21,7 +21,7 @@ export default function CalmLoader({ label }: { label?: string }) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-      <span className="ripple inline-block h-10 w-10 rounded-full bg-teal-300" />
+      <span className="ripple inline-block h-10 w-10 rounded-full bg-teal-300 shadow-glow-teal" />
       <p className="fade-in text-ink-soft" key={index}>
         {label ?? MESSAGES[index]}
       </p>
