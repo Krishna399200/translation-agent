@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-cream: #faf6ee;
+  --color-cream-deep: #f2ead9;
+  --color-card: #fffdf8;
+
+  --color-ink: #3a352f;
+  --color-ink-soft: #6b6156;
+  --color-ink-faint: #9a9082;
+
+  --color-teal-50: #eef4f3;
+  --color-teal-100: #d8e6e4;
+  --color-teal-300: #9dc0bd;
+  --color-teal-500: #4f7c82;
+  --color-teal-600: #3e6469;
+  --color-teal-700: #2f4d51;
+
+  --color-sage-100: #e7ecdd;
+  --color-sage-300: #bccca8;
+  --color-sage-500: #8fa87f;
+  --color-sage-600: #71895f;
+
+  --color-sand-100: #f3e9d4;
+  --color-sand-300: #e6d3ab;
+  --color-sand-500: #d3b273;
+
+  --color-lavender-100: #ece5f3;
+  --color-lavender-300: #cdbbdf;
+  --color-lavender-500: #a98fc4;
+
+  --color-gold-300: #ecd291;
+  --color-gold-500: #d9a441;
+  --color-gold-600: #b88530;
+
+  --shadow-soft: 0 12px 32px -12px rgba(58, 53, 47, 0.18);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream: var(--color-cream);
+  --color-cream-deep: var(--color-cream-deep);
+  --color-card: var(--color-card);
+
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-ink-faint: var(--color-ink-faint);
+
+  --color-teal-50: var(--color-teal-50);
+  --color-teal-100: var(--color-teal-100);
+  --color-teal-300: var(--color-teal-300);
+  --color-teal-500: var(--color-teal-500);
+  --color-teal-600: var(--color-teal-600);
+  --color-teal-700: var(--color-teal-700);
+
+  --color-sage-100: var(--color-sage-100);
+  --color-sage-300: var(--color-sage-300);
+  --color-sage-500: var(--color-sage-500);
+  --color-sage-600: var(--color-sage-600);
+
+  --color-sand-100: var(--color-sand-100);
+  --color-sand-300: var(--color-sand-300);
+  --color-sand-500: var(--color-sand-500);
+
+  --color-lavender-100: var(--color-lavender-100);
+  --color-lavender-300: var(--color-lavender-300);
+  --color-lavender-500: var(--color-lavender-500);
+
+  --color-gold-300: var(--color-gold-300);
+  --color-gold-500: var(--color-gold-500);
+  --color-gold-600: var(--color-gold-600);
+
+  --font-sans: var(--font-nunito), ui-rounded, "Segoe UI", sans-serif;
+  --font-display: var(--font-quicksand), ui-rounded, "Segoe UI", sans-serif;
+
+  --shadow-soft: var(--shadow-soft);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-cream: #262322;
+    --color-cream-deep: #1d1b1a;
+    --color-card: #2e2b28;
+
+    --color-ink: #f1ece2;
+    --color-ink-soft: #cabfae;
+    --color-ink-faint: #948b7c;
   }
 }
 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-cream-deep) 100%);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.65;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--color-sand-300);
+  color: var(--color-ink);
+}
+
+button {
+  font-family: inherit;
+}
+
+.press {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+}
+
+.press:active {
+  transform: scale(0.97);
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ripple {
+  animation: ripple 2.4s ease-in-out infinite;
+}
+
+@keyframes ripple {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.9;
+  }
 }
