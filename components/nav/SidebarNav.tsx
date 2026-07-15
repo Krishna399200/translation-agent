@@ -45,6 +45,15 @@ export default function SidebarNav() {
       </nav>
 
       <div className="border-t border-white/[0.06] px-2 pt-4">
+        <Link
+          href="/quick-calm"
+          className="press mb-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-lavender-300 hover:bg-white/5"
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3a9 9 0 1 0 5.6 16.1L21 20l-1-3.5A9 9 0 0 0 12 3Z" />
+          </svg>
+          Need a moment?
+        </Link>
         <SignOutButton />
       </div>
     </aside>

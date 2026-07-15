@@ -21,6 +21,7 @@ import CategoryPicker from "@/components/practice/CategoryPicker";
 import BreathingTransition from "@/components/practice/BreathingTransition";
 import LiveWaveform from "@/components/practice/LiveWaveform";
 import SessionRatingScreen from "@/components/practice/SessionRatingScreen";
+import BookmarkButton from "@/components/practice/BookmarkButton";
 
 type Stage = "loading" | "consent" | "setup" | "breathing" | "recording" | "rating" | "saving" | "done";
 
@@ -215,9 +216,14 @@ function PracticeContent() {
     return (
       <div className="fade-in relative w-full max-w-2xl">
         <div className="glow-orb" style={{ "--glow-color": "var(--color-sage-500)" } as React.CSSProperties} />
-        <div className="absolute right-0 top-0 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-4 py-1.5 text-sm text-ink-soft">
-          <span className="ripple inline-block h-2 w-2 rounded-full bg-mood-difficult" />
-          {isJournal ? "Recording" : "Time spent"}: {formatTime(elapsed)}
+        <div className="absolute right-0 top-0 z-10 flex items-center gap-3">
+          {!isJournal && userId && content.id !== PHRASE.id && (
+            <BookmarkButton userId={userId} textBankId={content.id} />
+          )}
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-4 py-1.5 text-sm text-ink-soft">
+            <span className="ripple inline-block h-2 w-2 rounded-full bg-mood-difficult" />
+            {isJournal ? "Recording" : "Time spent"}: {formatTime(elapsed)}
+          </div>
         </div>
 
         <div className="relative z-10 mt-16 rounded-2xl px-6 py-10 text-center">

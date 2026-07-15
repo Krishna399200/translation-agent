@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import Toggle from "@/components/Toggle";
 
@@ -26,6 +27,19 @@ export default function SettingsPage() {
           description="Skip the sentiment check-in after each session. You'll just see a simple 'Well done.'"
         />
       </div>
+
+      <Link
+        href="/quick-calm?view=affirmations"
+        className="press frosted-card mt-4 flex items-center justify-between rounded-2xl px-6 py-4 hover:border-lavender-500/40"
+      >
+        <div>
+          <p className="text-sm font-semibold text-ink">My Affirmations</p>
+          <p className="text-xs text-ink-faint">Lines you&apos;ve saved from practice</p>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-lavender-300)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </Link>
     </div>
   );
 }

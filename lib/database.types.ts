@@ -1,4 +1,9 @@
 export type PracticeType = "reading_text" | "mantra" | "varnamala" | "trigger_words" | "journal";
+export type QuickCalmExercise =
+  | "physiological_sigh"
+  | "box_breathing"
+  | "alternate_nostril"
+  | "third_eye_awareness";
 
 export type Database = {
   public: {
@@ -148,6 +153,96 @@ export type Database = {
         };
         Relationships: [];
       };
+      quick_calm_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          exercise_type: QuickCalmExercise;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          exercise_type: QuickCalmExercise;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          exercise_type?: QuickCalmExercise;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      moment_checkins: {
+        Row: {
+          id: string;
+          user_id: string;
+          sentiment: number;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          sentiment: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          sentiment?: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      user_saved_affirmations: {
+        Row: {
+          id: string;
+          user_id: string;
+          text_bank_id: string;
+          saved_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          text_bank_id: string;
+          saved_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          text_bank_id?: string;
+          saved_at?: string;
+        };
+        Relationships: [];
+      };
+      daily_checkins: {
+        Row: {
+          id: string;
+          user_id: string;
+          sentiment: number;
+          checkin_date: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          sentiment: number;
+          checkin_date?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          sentiment?: number;
+          checkin_date?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
   };
 };
@@ -157,3 +252,7 @@ export type PracticeSession = Database["public"]["Tables"]["practice_sessions"][
 export type TextBankEntry = Database["public"]["Tables"]["text_bank"]["Row"];
 export type TriggerWord = Database["public"]["Tables"]["trigger_words"]["Row"];
 export type UserTriggerWord = Database["public"]["Tables"]["user_trigger_words"]["Row"];
+export type QuickCalmSession = Database["public"]["Tables"]["quick_calm_sessions"]["Row"];
+export type MomentCheckin = Database["public"]["Tables"]["moment_checkins"]["Row"];
+export type SavedAffirmation = Database["public"]["Tables"]["user_saved_affirmations"]["Row"];
+export type DailyCheckin = Database["public"]["Tables"]["daily_checkins"]["Row"];

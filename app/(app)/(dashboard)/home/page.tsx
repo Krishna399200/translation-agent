@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/streak";
 import PlantStreak from "@/components/PlantStreak";
 import StartPracticeButton from "@/components/home/StartPracticeButton";
+import NeedAMomentButton from "@/components/home/NeedAMomentButton";
 import WeeklyJournalPrompt from "@/components/home/WeeklyJournalPrompt";
+import DailyCheckinCard from "@/components/home/DailyCheckinCard";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -47,6 +49,14 @@ export default async function HomePage() {
   const lastRated = list.find((s) => s.self_rating !== null);
   const lastFelt = lastRated ? `${lastRated.self_rating}/5` : "—";
 
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: todaysCheckin } = await supabase
+    .from("daily_checkins")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("checkin_date", today)
+    .maybeSingle();
+
   return (
     <div className="fade-in mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="frosted-card rounded-2xl p-8">
@@ -62,7 +72,10 @@ export default async function HomePage() {
 
         <div className="mt-8 flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <PlantStreak streak={streak} />
-          <StartPracticeButton />
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <NeedAMomentButton />
+            <StartPracticeButton />
+          </div>
         </div>
 
         <div className="mt-8">
@@ -73,6 +86,12 @@ export default async function HomePage() {
             <StatTile label="Last Felt" value={lastFelt} icon="heart" />
           </div>
         </div>
+
+        {!todaysCheckin && (
+          <div className="mt-6">
+            <DailyCheckinCard userId={user.id} />
+          </div>
+        )}
       </div>
 
       {shouldShowJournalPrompt(profile.last_journal_prompt_at) && (

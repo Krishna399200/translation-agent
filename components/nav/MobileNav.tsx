@@ -19,8 +19,14 @@ export default function MobileNav() {
 
   return (
     <div className="flex flex-col border-b border-white/[0.06] bg-black/20 md:hidden">
-      <div className="px-4 pt-4">
+      <div className="flex items-center justify-between px-4 pt-4">
         <Logo />
+        <Link
+          href="/quick-calm"
+          className="press flex items-center gap-1.5 rounded-full border border-lavender-500/30 px-3 py-1 text-xs font-medium text-lavender-300"
+        >
+          Need a moment?
+        </Link>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-3 py-3">
         {ITEMS.map(({ href, label, Icon }) => {
