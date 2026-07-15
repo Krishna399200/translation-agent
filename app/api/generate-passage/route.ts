@@ -36,11 +36,31 @@ Rules:
 - Plain prose, no markdown, no quotation marks around the whole thing, no title or label.
 - Never use clinical words like "disfluency," "stutter," "therapy," or "treatment."
 - Never mention this is an exercise or a passage — just write the content itself.
-- Output only the passage text, nothing else.`;
+- Do not include any preamble, introduction, or closing remark (no "Here is..." or "I hope this helps") — output ONLY the passage itself, nothing before or after it.`;
 }
 
 function extractWordCount(text: string) {
   return text.split(/\s+/).filter(Boolean).length;
+}
+
+// Gemini sometimes ignores the "no preamble" instruction and wraps the
+// passage in a lead-in line or a trailing remark. Strip the common shapes
+// rather than reject a perfectly good passage over its wrapper text.
+function cleanPassage(text: string): string {
+  let cleaned = text.trim();
+
+  // Strip a markdown-fenced block if the whole response is wrapped in one.
+  const fenceMatch = cleaned.match(/^```(?:\w+)?\n([\s\S]*?)\n```$/);
+  if (fenceMatch) cleaned = fenceMatch[1].trim();
+
+  const lines = cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  const preambleRe = /^(here('?s| is)|sure|certainly|of course|okay|absolutely)\b/i;
+  const postambleRe = /^(i hope|hope (this|that)|let me know|feel free|enjoy)\b/i;
+
+  while (lines.length > 1 && preambleRe.test(lines[0])) lines.shift();
+  while (lines.length > 1 && postambleRe.test(lines[lines.length - 1])) lines.pop();
+
+  return lines.join(" ").replace(/^["']|["']$/g, "").trim();
 }
 
 export async function POST(request: Request) {
@@ -80,30 +100,62 @@ export async function POST(request: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.9, maxOutputTokens: 400 },
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 1024,
+            // gemini-2.5-* models "think" by default, and thinking tokens
+            // count against maxOutputTokens — for a task this simple that
+            // was silently eating the whole budget and leaving little or
+            // nothing for the actual passage. Turn it off.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(20000),
       }
     );
 
     if (!response.ok) {
-      return NextResponse.json({ error: "Gemini request failed." }, { status: 502 });
+      const errBody = await response.text().catch(() => "");
+      console.error("[generate-passage] Gemini HTTP error", response.status, errBody.slice(0, 500));
+      return NextResponse.json(
+        { error: "Gemini request failed.", status: response.status, detail: errBody.slice(0, 300) },
+        { status: 502 }
+      );
     }
 
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (typeof text !== "string" || !text.trim()) {
-      return NextResponse.json({ error: "Empty response from Gemini." }, { status: 502 });
+    const candidate = data?.candidates?.[0];
+    const text = candidate?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
+
+    if (!text.trim()) {
+      console.error(
+        "[generate-passage] empty text from Gemini",
+        JSON.stringify({ finishReason: candidate?.finishReason, promptFeedback: data?.promptFeedback })
+      );
+      return NextResponse.json(
+        { error: "Empty response from Gemini.", finishReason: candidate?.finishReason ?? null },
+        { status: 502 }
+      );
     }
-    generated = text.trim().replace(/^["']|["']$/g, "");
-  } catch {
+    generated = cleanPassage(text);
+  } catch (err) {
+    console.error("[generate-passage] request errored", err);
     return NextResponse.json({ error: "Gemini request errored." }, { status: 502 });
   }
 
   const wordCount = extractWordCount(generated);
   const [min, max] = WORD_RANGE[length];
-  if (wordCount < min * 0.5 || wordCount > max * 1.6) {
-    return NextResponse.json({ error: "Generated passage was out of range." }, { status: 502 });
+  if (wordCount < min * 0.5 || wordCount > max * 1.8) {
+    console.error("[generate-passage] out of range", { wordCount, min, max, preview: generated.slice(0, 200) });
+    return NextResponse.json(
+      {
+        error: "Generated passage was out of range.",
+        wordCount,
+        expected: `${min}-${max}`,
+        preview: generated.slice(0, 200),
+      },
+      { status: 502 }
+    );
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -119,6 +171,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !inserted) {
+    console.error("[generate-passage] insert failed", insertError);
     return NextResponse.json({ error: "Could not save the generated passage." }, { status: 500 });
   }
 
