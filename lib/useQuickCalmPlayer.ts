@@ -8,7 +8,7 @@ export function useQuickCalmPlayer(steps: QuickCalmStep[], soundOn: boolean, onD
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(false);
   const onDoneRef = useRef(onDone);
-  const { speak, stop } = useSpeechVoiceover(soundOn);
+  const { speak, stop, supported } = useSpeechVoiceover(soundOn);
 
   useEffect(() => {
     onDoneRef.current = onDone;
@@ -18,20 +18,34 @@ export function useQuickCalmPlayer(steps: QuickCalmStep[], soundOn: boolean, onD
     const step = steps[index];
     if (!step) return;
 
-    speak(step.text);
+    let cancelled = false;
+    let breakTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const timer = setTimeout(() => {
+    function advance() {
+      if (cancelled) return;
       if (index + 1 >= steps.length) {
         setDone(true);
         onDoneRef.current();
       } else {
         setIndex((i) => i + 1);
       }
-    }, step.durationMs);
+    }
 
-    return () => clearTimeout(timer);
+    if (soundOn && supported) {
+      // Pause starts once the line has actually finished being spoken.
+      speak(step.text, () => {
+        breakTimer = setTimeout(advance, step.breakMs);
+      });
+    } else {
+      breakTimer = setTimeout(advance, step.durationMs);
+    }
+
+    return () => {
+      cancelled = true;
+      if (breakTimer) clearTimeout(breakTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
+  }, [index, soundOn]);
 
   useEffect(() => {
     if (!soundOn) stop();
