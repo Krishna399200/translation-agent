@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAudioRecorder } from "@/lib/useAudioRecorder";
@@ -9,7 +9,6 @@ import { useSessionSave } from "@/lib/useSessionSave";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useElapsedSeconds, formatTime } from "@/lib/useElapsedSeconds";
 import { pickText, rememberShownText, suggestDifficulty, type LengthTag, type Difficulty } from "@/lib/textBank";
-import { generatePassage } from "@/lib/generatePassage";
 import { PHRASE, type Pace } from "@/lib/phrase";
 import CalmLoader from "@/components/CalmLoader";
 import Button from "@/components/Button";
@@ -46,7 +45,6 @@ function PracticeContent() {
   const [saveError, setSaveError] = useState("");
   const [content, setContent] = useState<{ id: string; text: string }>({ id: PHRASE.id, text: PHRASE.text });
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const pendingContentRef = useRef<Promise<{ id: string; text: string }> | null>(null);
 
   const { tone432, setTone432, noPressureMode } = useSettings();
   const recorder = useAudioRecorder();
@@ -129,37 +127,23 @@ function PracticeContent() {
     setStage("setup");
   }
 
-  function pickContent(): Promise<{ id: string; text: string }> {
-    if (!userId) return Promise.resolve(content);
-    // Try Gemini for a fresh, longer passage; fall back to the curated bank
-    // instantly on any failure (no key configured, network error, etc).
-    return generatePassage(category, length, difficulty).then(
-      (generated) => generated ?? pickText(createClient(), userId, category, length, difficulty)
-    );
-  }
-
-  function beginContentFetch() {
-    // Kick off the fetch immediately but don't block the tap — it resolves
-    // in the background while the breathing transition plays, so replaying
-    // never feels like it's waiting on a network call.
-    pendingContentRef.current = pickContent();
-  }
-
-  function handleBeginSetup() {
-    if (!isJournal) beginContentFetch();
+  async function handleBeginSetup() {
+    if (!isJournal && userId) {
+      const picked = await pickText(createClient(), userId, category, length, difficulty);
+      setContent(picked);
+    }
     setStage("breathing");
   }
 
-  function handleReplay() {
-    if (!isJournal) beginContentFetch();
+  async function handleReplay() {
+    if (!isJournal && userId) {
+      const picked = await pickText(createClient(), userId, category, length, difficulty);
+      setContent(picked);
+    }
     setStage("breathing");
   }
 
   async function handleBreathingDone() {
-    if (!isJournal && pendingContentRef.current) {
-      const picked = await pendingContentRef.current;
-      setContent(picked);
-    }
     const started = await recorder.start();
     if (started) setStage("recording");
     else setStage("setup");

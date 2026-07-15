@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:passages": "node --env-file=.env.local scripts/generate-passages.mjs",
+    "generate:quickcalm-audio": "node --env-file=.env.local scripts/generate-quickcalm-audio.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

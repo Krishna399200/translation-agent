@@ -1,47 +1,36 @@
 "use client";
 
-import { useQuickCalmPlayer } from "@/lib/useQuickCalmPlayer";
+import { useEffect, useState } from "react";
 import type { QuickCalmDefinition } from "@/lib/quickCalm";
-import Toggle from "@/components/Toggle";
-import Avatar from "@/components/quickcalm/Avatar";
-import BreathingVisual from "@/components/quickcalm/BreathingVisual";
+import CalmLoader from "@/components/CalmLoader";
+import TimedExercisePlayer from "@/components/quickcalm/TimedExercisePlayer";
+import SpeechExercisePlayer from "@/components/quickcalm/SpeechExercisePlayer";
 
 /**
- * Mounted with a fresh `key` per run (see quick-calm/page.tsx) so replaying
- * an exercise resets useQuickCalmPlayer's internal step index cleanly,
- * instead of needing an explicit reset() escape hatch on the hook.
+ * Picks between the ElevenLabs-audio-driven player (real timestamps, no
+ * drift) and the Web Speech API fallback, per exercise, based on whether
+ * scripts/generate-quickcalm-audio.mjs has produced files for it yet.
+ * Nothing in the app breaks if it hasn't — it just uses the fallback.
  */
-export default function ExercisePlayer({
-  exercise,
-  soundOn,
-  onSoundChange,
-  onDone,
-}: {
+export default function ExercisePlayer(props: {
   exercise: QuickCalmDefinition;
   soundOn: boolean;
   onSoundChange: (value: boolean) => void;
   onDone: () => void;
 }) {
-  const { step } = useQuickCalmPlayer(exercise.steps, soundOn, onDone);
+  const [hasTimedAudio, setHasTimedAudio] = useState<boolean | null>(null);
 
-  if (!step) return null;
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/audio/quick-calm/${props.exercise.key}.json`, { method: "HEAD" })
+      .then((res) => !cancelled && setHasTimedAudio(res.ok))
+      .catch(() => !cancelled && setHasTimedAudio(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [props.exercise.key]);
 
-  return (
-    <div className="fade-in flex w-full max-w-md flex-col items-center text-center">
-      <div className="mb-2 flex w-full items-center justify-between">
-        <span className="text-sm text-ink-faint">{exercise.title}</span>
-        <Toggle checked={soundOn} onChange={onSoundChange} label="Sound" />
-      </div>
+  if (hasTimedAudio === null) return <CalmLoader />;
 
-      <Avatar />
-
-      <div className="mt-4">
-        <BreathingVisual visual={exercise.visual} step={step} />
-      </div>
-
-      <p key={step.text} className="fade-in mt-8 min-h-16 text-lg text-ink">
-        {step.text}
-      </p>
-    </div>
-  );
+  return hasTimedAudio ? <TimedExercisePlayer {...props} /> : <SpeechExercisePlayer {...props} />;
 }

@@ -48,6 +48,16 @@ export function WordsIcon({ className }: IconProps) {
   );
 }
 
+export function ScenarioIcon({ className }: IconProps) {
+  return (
+    <svg {...common} className={className} stroke="currentColor">
+      <rect x="3" y="5" width="18" height="12" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+      <circle cx="12" cy="10" r="2.2" />
+    </svg>
+  );
+}
+
 export function ProgressIcon({ className }: IconProps) {
   return (
     <svg {...common} className={className} stroke="currentColor">

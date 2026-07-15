@@ -54,7 +54,15 @@ export async function pickText(
   const recentIds = getRecentIds(userId);
 
   async function candidatesFor(matchDifficulty: boolean, excludeRecent: boolean) {
-    let query = supabase.from("text_bank").select("*").eq("category", category).eq("length_tag", length);
+    // scenario_type rows are reserved for the Scenario Simulation module —
+    // some contain an unfilled {trigger_word_slot} placeholder that would
+    // render literally if it ever showed up in ordinary Reading Practice.
+    let query = supabase
+      .from("text_bank")
+      .select("*")
+      .eq("category", category)
+      .eq("length_tag", length)
+      .is("scenario_type", null);
     if (matchDifficulty) query = query.eq("difficulty", difficulty);
     if (excludeRecent && recentIds.length > 0) {
       query = query.not("id", "in", `(${recentIds.join(",")})`);
@@ -74,4 +82,62 @@ export async function pickText(
 
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   return { id: pick.id, text: pick.content };
+}
+
+export type ScenarioType = "interview" | "lecture" | "classroom" | "hosting";
+
+/**
+ * Picks a real_life_scenarios passage for the given scenario type. When the
+ * user has saved trigger words, prefers passages containing the
+ * {trigger_word_slot} placeholder and fills it with one of their words;
+ * otherwise prefers plain passages with no placeholder at all.
+ */
+export async function pickScenarioPassage(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  scenarioType: ScenarioType,
+  savedTriggerWords: string[]
+): Promise<{ id: string; text: string }> {
+  const recentIds = getRecentIds(userId);
+
+  let query = supabase
+    .from("text_bank")
+    .select("*")
+    .eq("category", "real_life_scenarios")
+    .eq("scenario_type", scenarioType);
+  if (recentIds.length > 0) {
+    query = query.not("id", "in", `(${recentIds.join(",")})`);
+  }
+
+  const { data } = await query;
+  let candidates = (data ?? []) as TextBankEntry[];
+
+  if (candidates.length === 0) {
+    const { data: fallbackData } = await supabase
+      .from("text_bank")
+      .select("*")
+      .eq("category", "real_life_scenarios")
+      .eq("scenario_type", scenarioType);
+    candidates = (fallbackData ?? []) as TextBankEntry[];
+  }
+
+  if (candidates.length === 0) {
+    return { id: PHRASE.id, text: PHRASE.text };
+  }
+
+  const hasWords = savedTriggerWords.length > 0;
+  const withSlot = candidates.filter((c) => c.content.includes("{trigger_word_slot}"));
+  const withoutSlot = candidates.filter((c) => !c.content.includes("{trigger_word_slot}"));
+
+  const pool = hasWords && withSlot.length > 0 ? withSlot : withoutSlot.length > 0 ? withoutSlot : candidates;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+
+  const text = hasWords
+    ? pick.content.replace(
+        "{trigger_word_slot}",
+        savedTriggerWords[Math.floor(Math.random() * savedTriggerWords.length)]
+      )
+    : pick.content.replace("{trigger_word_slot}", "this");
+
+  return { id: pick.id, text };
 }

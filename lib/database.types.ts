@@ -86,6 +86,7 @@ export type Database = {
           length_tag: string;
           category: string;
           difficulty: string;
+          scenario_type: string | null;
           created_at: string;
         };
         Insert: {
@@ -95,6 +96,7 @@ export type Database = {
           length_tag: string;
           category: string;
           difficulty?: string;
+          scenario_type?: string | null;
           created_at?: string;
         };
         Update: {
@@ -104,6 +106,7 @@ export type Database = {
           length_tag?: string;
           category?: string;
           difficulty?: string;
+          scenario_type?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -246,12 +249,46 @@ export type Database = {
         };
         Relationships: [];
       };
+      scenario_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          scenario_type: string;
+          text_bank_id: string | null;
+          audio_url: string;
+          duration_seconds: number;
+          self_rating: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          scenario_type: string;
+          text_bank_id?: string | null;
+          audio_url: string;
+          duration_seconds: number;
+          self_rating?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          scenario_type?: string;
+          text_bank_id?: string | null;
+          audio_url?: string;
+          duration_seconds?: number;
+          self_rating?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
   };
 };
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type PracticeSession = Database["public"]["Tables"]["practice_sessions"]["Row"];
+export type ScenarioSession = Database["public"]["Tables"]["scenario_sessions"]["Row"];
 export type TextBankEntry = Database["public"]["Tables"]["text_bank"]["Row"];
 export type TriggerWord = Database["public"]["Tables"]["trigger_words"]["Row"];
 export type UserTriggerWord = Database["public"]["Tables"]["user_trigger_words"]["Row"];
