@@ -26,6 +26,9 @@ Editor and run, **in order**:
 2. [`supabase/migration_002_practice_modules.sql`](./supabase/migration_002_practice_modules.sql) —
    persistent settings columns, the dynamic `text_bank`, the `trigger_words` /
    `user_trigger_words` tables, and `practice_type` on `practice_sessions`.
+3. [`supabase/migration_003_comfort_features.sql`](./supabase/migration_003_comfort_features.sql) —
+   `quick_calm_sessions`, `moment_checkins`, `user_saved_affirmations`, and
+   `daily_checkins`.
 
 In **Authentication → URL Configuration**, add your local and deployed URLs
 (e.g. `http://localhost:3000/auth/callback` and
@@ -96,6 +99,26 @@ supabase/migration_002_practice_modules.sql  Practice modules schema
 All four save through the same shared recorder, storage upload, and
 `practice_sessions` insert (`lib/useSessionSave.ts`), tagged by
 `practice_type`.
+
+## In-the-moment comfort features
+
+Separate from scheduled practice, none scored or streak-tracked:
+
+- **Quick Calm** (`/quick-calm`) — four short, avatar-guided breathing
+  exercises (physiological sigh, box breathing, alternate nostril, third-eye
+  body awareness), reachable in one tap from Home and from both app shells.
+  Voice-over uses the browser's built-in **Speech Synthesis API**
+  (`lib/useSpeechVoiceover.ts`), not pre-generated ElevenLabs audio — this
+  build has no ElevenLabs account or audio-hosting pipeline. Swapping in
+  hosted narration later just means pointing `speak()` at an `<audio>`
+  element instead.
+- **"That was hard"** — a lightweight sentiment + optional note check-in,
+  no recording, reachable from the Quick Calm hub.
+- **My Affirmations** — bookmark any line during Reading Practice (the icon
+  next to the "Time spent" pill) and revisit it statically later, from Quick
+  Calm or Settings.
+- **Daily check-in** — a dismissible one-tap mood card on Home, independent
+  of whether you practice that day.
 
 ## Settings
 
