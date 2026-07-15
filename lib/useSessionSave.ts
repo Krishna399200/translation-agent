@@ -21,24 +21,37 @@ export function useSessionSave(userId: string) {
         .from("recordings")
         .upload(path, params.blob, { contentType: params.blob.type || "audio/webm" });
 
-      if (uploadError) return { error: "We couldn't save that recording. Mind trying again?" };
+      if (uploadError) return { error: "We couldn't save that recording. Mind trying again?", sessionId: null };
 
-      const { error: insertError } = await supabase.from("practice_sessions").insert({
-        user_id: userId,
-        phrase_id: params.contentRef,
-        audio_url: path,
-        duration_seconds: params.durationSeconds,
-        self_rating: params.selfRating,
-        baseline_confidence: params.baselineConfidence ?? null,
-        practice_type: params.practiceType,
-      });
+      const { data, error: insertError } = await supabase
+        .from("practice_sessions")
+        .insert({
+          user_id: userId,
+          phrase_id: params.contentRef,
+          audio_url: path,
+          duration_seconds: params.durationSeconds,
+          self_rating: params.selfRating,
+          baseline_confidence: params.baselineConfidence ?? null,
+          practice_type: params.practiceType,
+        })
+        .select("id")
+        .single();
 
-      if (insertError) return { error: "We couldn't save that recording. Mind trying again?" };
+      if (insertError) return { error: "We couldn't save that recording. Mind trying again?", sessionId: null };
 
-      return { error: null };
+      return { error: null, sessionId: data.id as string };
     },
     [userId]
   );
 
-  return save;
+  const updateRating = useCallback(async (sessionId: string, rating: number) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("practice_sessions")
+      .update({ self_rating: rating })
+      .eq("id", sessionId);
+    return { error: error ? "That didn't save. Mind trying again?" : null };
+  }, []);
+
+  return { save, updateRating };
 }

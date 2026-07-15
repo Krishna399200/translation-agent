@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAudioRecorder } from "@/lib/useAudioRecorder";
@@ -8,7 +8,8 @@ import { usePhraseHighlighter } from "@/lib/usePhraseHighlighter";
 import { useSessionSave } from "@/lib/useSessionSave";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useElapsedSeconds, formatTime } from "@/lib/useElapsedSeconds";
-import { pickText, rememberShownText, type LengthTag } from "@/lib/textBank";
+import { pickText, rememberShownText, suggestDifficulty, type LengthTag, type Difficulty } from "@/lib/textBank";
+import { generatePassage } from "@/lib/generatePassage";
 import { PHRASE, type Pace } from "@/lib/phrase";
 import CalmLoader from "@/components/CalmLoader";
 import Button from "@/components/Button";
@@ -18,12 +19,14 @@ import PhraseDisplay from "@/components/practice/PhraseDisplay";
 import PacePicker from "@/components/practice/PacePicker";
 import LengthPicker from "@/components/practice/LengthPicker";
 import CategoryPicker from "@/components/practice/CategoryPicker";
+import DifficultyPicker from "@/components/practice/DifficultyPicker";
 import BreathingTransition from "@/components/practice/BreathingTransition";
 import LiveWaveform from "@/components/practice/LiveWaveform";
 import SessionRatingScreen from "@/components/practice/SessionRatingScreen";
+import CompletionScreen from "@/components/practice/CompletionScreen";
 import BookmarkButton from "@/components/practice/BookmarkButton";
 
-type Stage = "loading" | "consent" | "setup" | "breathing" | "recording" | "rating" | "saving" | "done";
+type Stage = "loading" | "consent" | "setup" | "breathing" | "recording" | "saving" | "done" | "rating" | "rated";
 
 const JOURNAL_PROMPT = "How has this week felt for your voice? Speak freely — there's no script, just you.";
 
@@ -36,28 +39,47 @@ function PracticeContent() {
   const [pace, setPace] = useState<Pace>("medium");
   const [length, setLength] = useState<LengthTag>("short");
   const [category, setCategory] = useState("affirmations");
+  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [userId, setUserId] = useState<string | null>(null);
   const [baselineConfidence, setBaselineConfidence] = useState<number | null>(null);
   const [isFirstSession, setIsFirstSession] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [content, setContent] = useState<{ id: string; text: string }>({ id: PHRASE.id, text: PHRASE.text });
-  const [pendingRecording, setPendingRecording] = useState<{ blob: Blob; durationSeconds: number } | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const pendingContentRef = useRef<Promise<{ id: string; text: string }> | null>(null);
 
   const { tone432, setTone432, noPressureMode } = useSettings();
   const recorder = useAudioRecorder();
   const elapsed = useElapsedSeconds(stage === "recording");
-  const save = useSessionSave(userId ?? "");
+  const { save, updateRating } = useSessionSave(userId ?? "");
 
   const words = isJournal ? [] : content.text.split(" ");
 
   async function finishRecording(result: { blob: Blob; durationSeconds: number }) {
     if (!isJournal && userId) rememberShownText(userId, content.id);
-    setPendingRecording(result);
-    if (isJournal || noPressureMode) {
-      await persist(result, null);
-    } else {
-      setStage("rating");
+    if (!userId) return;
+
+    setStage("saving");
+    setSaveError("");
+
+    const { error, sessionId: newId } = await save({
+      blob: result.blob,
+      durationSeconds: result.durationSeconds,
+      practiceType: isJournal ? "journal" : "reading_text",
+      contentRef: isJournal ? "journal" : content.id,
+      selfRating: null,
+      baselineConfidence: isFirstSession ? baselineConfidence : null,
+    });
+
+    if (error) {
+      setSaveError(error);
+      setStage("recording");
+      return;
     }
+
+    setSessionId(newId);
+    setIsFirstSession(false);
+    setStage("done");
   }
 
   const activeIndex = usePhraseHighlighter(words.length, pace, stage === "recording" && !isJournal, async () => {
@@ -79,16 +101,22 @@ function PracticeContent() {
 
       setUserId(user.id);
 
-      const [{ data: profile }, { count }] = await Promise.all([
+      const [{ data: profile }, { count }, { count: readingCount }] = await Promise.all([
         supabase.from("profiles").select("baseline_confidence").eq("id", user.id).maybeSingle(),
         supabase
           .from("practice_sessions")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id),
+        supabase
+          .from("practice_sessions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("practice_type", "reading_text"),
       ]);
 
       setBaselineConfidence(profile?.baseline_confidence ?? null);
       setIsFirstSession((count ?? 0) === 0);
+      setDifficulty(suggestDifficulty(readingCount ?? 0));
 
       const consented = localStorage.getItem(`fluent_consent_${user.id}`);
       setStage(consented ? "setup" : "consent");
@@ -101,15 +129,37 @@ function PracticeContent() {
     setStage("setup");
   }
 
-  async function handleBeginSetup() {
-    if (!isJournal && userId) {
-      const picked = await pickText(createClient(), userId, category, length);
-      setContent(picked);
-    }
+  function pickContent(): Promise<{ id: string; text: string }> {
+    if (!userId) return Promise.resolve(content);
+    // Try Gemini for a fresh, longer passage; fall back to the curated bank
+    // instantly on any failure (no key configured, network error, etc).
+    return generatePassage(category, length, difficulty).then(
+      (generated) => generated ?? pickText(createClient(), userId, category, length, difficulty)
+    );
+  }
+
+  function beginContentFetch() {
+    // Kick off the fetch immediately but don't block the tap — it resolves
+    // in the background while the breathing transition plays, so replaying
+    // never feels like it's waiting on a network call.
+    pendingContentRef.current = pickContent();
+  }
+
+  function handleBeginSetup() {
+    if (!isJournal) beginContentFetch();
+    setStage("breathing");
+  }
+
+  function handleReplay() {
+    if (!isJournal) beginContentFetch();
     setStage("breathing");
   }
 
   async function handleBreathingDone() {
+    if (!isJournal && pendingContentRef.current) {
+      const picked = await pendingContentRef.current;
+      setContent(picked);
+    }
     const started = await recorder.start();
     if (started) setStage("recording");
     else setStage("setup");
@@ -120,37 +170,14 @@ function PracticeContent() {
     await finishRecording(result);
   }
 
-  async function persist(result: { blob: Blob; durationSeconds: number }, rating: number | null) {
-    if (!userId) return;
-    setStage("saving");
-    setSaveError("");
-
-    const { error } = await save({
-      blob: result.blob,
-      durationSeconds: result.durationSeconds,
-      practiceType: isJournal ? "journal" : "reading_text",
-      contentRef: isJournal ? "journal" : content.id,
-      selfRating: rating,
-      baselineConfidence: isFirstSession ? baselineConfidence : null,
-    });
-
+  async function handleRatingSubmit(rating: number) {
+    if (!sessionId) return;
+    const { error } = await updateRating(sessionId, rating);
     if (error) {
       setSaveError(error);
-      setStage(isJournal || noPressureMode ? "recording" : "rating");
       return;
     }
-
-    setStage("done");
-  }
-
-  async function handleRatingSubmit(rating: number) {
-    if (!pendingRecording) return;
-    await persist(pendingRecording, rating);
-  }
-
-  async function handleSkipRating() {
-    if (!pendingRecording) return;
-    await persist(pendingRecording, null);
+    setStage("rated");
   }
 
   if (stage === "loading") return <CalmLoader />;
@@ -179,6 +206,9 @@ function PracticeContent() {
             </div>
             <div className="mt-4 flex justify-center">
               <LengthPicker value={length} onChange={setLength} />
+            </div>
+            <div className="mt-4 flex justify-center">
+              <DifficultyPicker value={difficulty} onChange={setDifficulty} />
             </div>
             <div className="mt-6">
               <PacePicker pace={pace} onChange={setPace} />
@@ -247,47 +277,42 @@ function PracticeContent() {
     );
   }
 
-  if (stage === "rating") {
+  if (stage === "saving") return <CalmLoader label="Saving your progress..." />;
+
+  if (stage === "done") {
     return (
       <>
-        <SessionRatingScreen
-          stats={[
-            { label: "Duration", value: pendingRecording ? formatTime(Math.round(pendingRecording.durationSeconds)) : "—" },
-            { label: "Words spoken", value: String(words.length) },
-          ]}
-          onSubmit={handleRatingSubmit}
-          onSkip={handleSkipRating}
-          submitting={false}
+        <CompletionScreen
+          onReplay={handleReplay}
+          onRate={!isJournal && !noPressureMode ? () => setStage("rating") : undefined}
+          noPressureMode={noPressureMode || isJournal}
+          replayLabel={isJournal ? "Reflect again" : "Do it again"}
         />
         {saveError && <p className="mt-4 text-center text-sm text-mood-difficult">{saveError}</p>}
       </>
     );
   }
 
-  if (stage === "saving") return <CalmLoader label="Saving your progress..." />;
+  if (stage === "rating") {
+    return (
+      <>
+        <SessionRatingScreen
+          stats={[{ label: "Words spoken", value: String(words.length) }]}
+          onSubmit={handleRatingSubmit}
+          onSkip={() => setStage("done")}
+          submitting={false}
+          skipLabel="Never mind"
+        />
+        {saveError && <p className="mt-4 text-center text-sm text-mood-difficult">{saveError}</p>}
+      </>
+    );
+  }
 
-  return (
-    <div className="fade-in w-full max-w-sm text-center">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-ink">
-        {noPressureMode || isJournal ? "Well done." : "That took courage."}
-      </h2>
-      <p className="mt-3 text-ink-soft">
-        {isJournal
-          ? "Thank you for showing up for yourself this week."
-          : noPressureMode
-            ? "See you next time."
-            : "Every rep counts, even the hard ones."}
-      </p>
-      <div className="mt-8 flex flex-col gap-3">
-        <Button onClick={() => router.push("/progress")} className="w-full">
-          Listen back
-        </Button>
-        <Button variant="secondary" onClick={() => router.push("/home")} className="w-full">
-          Back home
-        </Button>
-      </div>
-    </div>
-  );
+  if (stage === "rated") {
+    return <CompletionScreen onReplay={handleReplay} noPressureMode={false} />;
+  }
+
+  return <CalmLoader />;
 }
 
 export default function PracticePage() {

@@ -10,27 +10,27 @@ import { useSettings } from "@/lib/settings/SettingsContext";
 import { useElapsedSeconds, formatTime } from "@/lib/useElapsedSeconds";
 import { MANTRAS } from "@/lib/mantras";
 import CalmLoader from "@/components/CalmLoader";
-import Button from "@/components/Button";
 import Toggle from "@/components/Toggle";
 import SelectCard from "@/components/practice/SelectCard";
 import BreathingTransition from "@/components/practice/BreathingTransition";
 import LiveWaveform from "@/components/practice/LiveWaveform";
 import SessionRatingScreen from "@/components/practice/SessionRatingScreen";
+import CompletionScreen from "@/components/practice/CompletionScreen";
 
-type Stage = "loading" | "select" | "breathing" | "looping" | "rating" | "saving" | "done";
+type Stage = "loading" | "select" | "breathing" | "looping" | "saving" | "done" | "rating" | "rated";
 
 export default function MantraPage() {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("loading");
   const [userId, setUserId] = useState<string | null>(null);
   const [mantraKey, setMantraKey] = useState<string | null>(null);
-  const [pendingRecording, setPendingRecording] = useState<{ blob: Blob; durationSeconds: number } | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState("");
 
   const { tone432, setTone432, noPressureMode } = useSettings();
   const recorder = useAudioRecorder();
   const elapsed = useElapsedSeconds(stage === "looping");
-  const save = useSessionSave(userId ?? "");
+  const { save, updateRating } = useSessionSave(userId ?? "");
 
   const mantra = MANTRAS.find((m) => m.key === mantraKey) ?? MANTRAS[0];
   const words = mantra.transliteration.split(" ");
@@ -56,6 +56,10 @@ export default function MantraPage() {
     setStage("breathing");
   }
 
+  function handleReplay() {
+    setStage("breathing");
+  }
+
   async function handleBreathingDone() {
     const started = await recorder.start();
     if (started) setStage("looping");
@@ -64,34 +68,37 @@ export default function MantraPage() {
 
   async function handleFinish() {
     const result = await recorder.stop();
-    setPendingRecording(result);
-    if (noPressureMode) {
-      await persist(result, null);
-    } else {
-      setStage("rating");
-    }
-  }
-
-  async function persist(result: { blob: Blob; durationSeconds: number }, rating: number | null) {
     if (!userId) return;
+
     setStage("saving");
     setSaveError("");
 
-    const { error } = await save({
+    const { error, sessionId: newId } = await save({
       blob: result.blob,
       durationSeconds: result.durationSeconds,
       practiceType: "mantra",
       contentRef: mantra.key,
-      selfRating: rating,
+      selfRating: null,
     });
 
     if (error) {
       setSaveError(error);
-      setStage(noPressureMode ? "looping" : "rating");
+      setStage("looping");
       return;
     }
 
+    setSessionId(newId);
     setStage("done");
+  }
+
+  async function handleRatingSubmit(rating: number) {
+    if (!sessionId) return;
+    const { error } = await updateRating(sessionId, rating);
+    if (error) {
+      setSaveError(error);
+      return;
+    }
+    setStage("rated");
   }
 
   if (stage === "loading") return <CalmLoader />;
@@ -154,39 +161,39 @@ export default function MantraPage() {
     );
   }
 
-  if (stage === "rating") {
+  if (stage === "saving") return <CalmLoader label="Saving your progress..." />;
+
+  if (stage === "done") {
     return (
       <>
-        <SessionRatingScreen
-          stats={[
-            { label: "Duration", value: pendingRecording ? formatTime(Math.round(pendingRecording.durationSeconds)) : "—" },
-            { label: "Mantra", value: mantra.name },
-          ]}
-          onSubmit={(rating) => pendingRecording && persist(pendingRecording, rating)}
-          onSkip={() => pendingRecording && persist(pendingRecording, null)}
-          submitting={false}
+        <CompletionScreen
+          onReplay={handleReplay}
+          onRate={!noPressureMode ? () => setStage("rating") : undefined}
+          noPressureMode={noPressureMode}
         />
         {saveError && <p className="mt-4 text-center text-sm text-mood-difficult">{saveError}</p>}
       </>
     );
   }
 
-  if (stage === "saving") return <CalmLoader label="Saving your progress..." />;
+  if (stage === "rating") {
+    return (
+      <>
+        <SessionRatingScreen
+          stats={[{ label: "Mantra", value: mantra.name }]}
+          onSubmit={handleRatingSubmit}
+          onSkip={() => setStage("done")}
+          submitting={false}
+          skipLabel="Never mind"
+        />
+        {saveError && <p className="mt-4 text-center text-sm text-mood-difficult">{saveError}</p>}
+      </>
+    );
+  }
 
-  return (
-    <div className="fade-in w-full max-w-sm text-center">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-ink">
-        {noPressureMode ? "Well done." : "That took courage."}
-      </h2>
-      <p className="mt-3 text-ink-soft">{noPressureMode ? "See you next time." : "Every rep counts, even the hard ones."}</p>
-      <div className="mt-8 flex flex-col gap-3">
-        <Button onClick={() => router.push("/progress")} className="w-full">
-          Listen back
-        </Button>
-        <Button variant="secondary" onClick={() => router.push("/home")} className="w-full">
-          Back home
-        </Button>
-      </div>
-    </div>
-  );
+  if (stage === "rated") {
+    return <CompletionScreen onReplay={handleReplay} noPressureMode={false} />;
+  }
+
+  return <CalmLoader />;
 }

@@ -74,18 +74,27 @@ export function useSpeechVoiceover(enabled: boolean) {
 
   const speak = useCallback(
     (text: string, onEnd?: () => void) => {
-      if (!supported || !enabled) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.82;
-      utterance.pitch = 0.92;
-      utterance.volume = 0.9;
-      if (voice) utterance.voice = voice;
-      if (onEnd) {
-        utterance.onend = onEnd;
-        utterance.onerror = onEnd;
+      if (!supported || !enabled) {
+        onEnd?.();
+        return;
       }
-      window.speechSynthesis.speak(utterance);
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.82;
+        utterance.pitch = 0.92;
+        utterance.volume = 0.9;
+        if (voice) utterance.voice = voice;
+        if (onEnd) {
+          utterance.onend = onEnd;
+          utterance.onerror = onEnd;
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        // Some browsers throw synchronously in restricted contexts (e.g. no
+        // prior user gesture). Fall back to silent timing rather than stall.
+        onEnd?.();
+      }
     },
     [supported, enabled, voice]
   );

@@ -29,6 +29,16 @@ Editor and run, **in order**:
 3. [`supabase/migration_003_comfort_features.sql`](./supabase/migration_003_comfort_features.sql) —
    `quick_calm_sessions`, `moment_checkins`, `user_saved_affirmations`, and
    `daily_checkins`.
+4. [`supabase/migration_004_session_update_policy.sql`](./supabase/migration_004_session_update_policy.sql) —
+   allows updating a session's `self_rating` after the fact (the optional
+   "How did that feel?" flow updates the saved session instead of blocking
+   completion on it).
+5. [`supabase/migration_005_reading_difficulty.sql`](./supabase/migration_005_reading_difficulty.sql) —
+   adds `difficulty` (easy/medium/hard) to `text_bank` and seeds hard-tier
+   passages.
+6. [`supabase/migration_006_text_bank_insert_policy.sql`](./supabase/migration_006_text_bank_insert_policy.sql) —
+   lets signed-in users insert into `text_bank`, needed for Gemini-generated
+   passages to be saved.
 
 In **Authentication → URL Configuration**, add your local and deployed URLs
 (e.g. `http://localhost:3000/auth/callback` and
@@ -42,7 +52,9 @@ cp env.example .env.local
 ```
 
 Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from
-your Supabase project's **Settings → API** page.
+your Supabase project's **Settings → API** page. `GEMINI_API_KEY` is
+optional — without it, Reading Practice just uses the curated `text_bank`
+pool instead of generating fresh passages.
 
 ### 3. Run locally
 
@@ -86,8 +98,16 @@ supabase/migration_002_practice_modules.sql  Practice modules schema
 
 ## Practice modules
 
-- **Practice** — dynamic reading text (category + length + pace), or the
-  weekly voice journal (`/practice?mode=journal`, unscored).
+- **Practice** — dynamic reading text (category + length + difficulty +
+  pace), or the weekly voice journal (`/practice?mode=journal`, unscored).
+  Difficulty (easy/medium/hard) defaults to a suggestion based on how many
+  reading sessions you've completed (`suggestDifficulty` in
+  `lib/textBank.ts`), but is always user-overridable. When `GEMINI_API_KEY`
+  is set, each session tries to generate a fresh, meaningfully longer
+  passage first (`app/api/generate-passage`) and only falls back to the
+  curated `text_bank` pool on any failure — the fetch starts the moment you
+  tap through setup and resolves in the background during the breathing
+  transition, so it never blocks the UI.
 - **Mantra** — Om, Om Namah Shivaya, or the Gayatri Mantra, looping until you
   stop.
 - **Sound Foundations** — a Sanskrit varnamala trainer: vowels, consonants,
@@ -98,7 +118,12 @@ supabase/migration_002_practice_modules.sql  Practice modules schema
 
 All four save through the same shared recorder, storage upload, and
 `practice_sessions` insert (`lib/useSessionSave.ts`), tagged by
-`practice_type`.
+`practice_type`. Every session saves **immediately** on finish
+(`self_rating` null) and leads to a completion screen where **"Do it
+again" is the primary action** — replaying skips straight back into the
+same content (a fresh pick for Reading) without re-showing setup. Rating
+("How did that feel?") is a secondary, optional link that updates the
+already-saved row via `updateRating` rather than gating completion on it.
 
 ## In-the-moment comfort features
 
@@ -107,11 +132,15 @@ Separate from scheduled practice, none scored or streak-tracked:
 - **Quick Calm** (`/quick-calm`) — four short, avatar-guided breathing
   exercises (physiological sigh, box breathing, alternate nostril, third-eye
   body awareness), reachable in one tap from Home and from both app shells.
-  Voice-over uses the browser's built-in **Speech Synthesis API**
-  (`lib/useSpeechVoiceover.ts`), not pre-generated ElevenLabs audio — this
-  build has no ElevenLabs account or audio-hosting pipeline. Swapping in
-  hosted narration later just means pointing `speak()` at an `<audio>`
-  element instead.
+  "Do it again" replays instantly (`components/quickcalm/ExercisePlayer.tsx`
+  remounts on a `key` bump to reset cleanly). Voice-over uses the browser's
+  built-in **Speech Synthesis API** (`lib/useSpeechVoiceover.ts`), not
+  pre-generated ElevenLabs audio — this build has no ElevenLabs account or
+  audio-hosting pipeline. Pauses between lines start when the browser's
+  `end` event actually fires, with a watchdog timeout as a safety net in
+  case that event never comes (a known flaky spot in browser TTS) so an
+  exercise can't get stuck. Swapping in hosted narration later just means
+  pointing `speak()` at an `<audio>` element instead.
 - **"That was hard"** — a lightweight sentiment + optional note check-in,
   no recording, reachable from the Quick Calm hub.
 - **My Affirmations** — bookmark any line during Reading Practice (the icon

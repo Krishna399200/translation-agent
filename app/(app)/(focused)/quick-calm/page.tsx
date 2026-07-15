@@ -4,15 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { QUICK_CALM_EXERCISES, getExercise, type QuickCalmDefinition } from "@/lib/quickCalm";
-import { useQuickCalmPlayer } from "@/lib/useQuickCalmPlayer";
 import type { QuickCalmExercise, TextBankEntry } from "@/lib/database.types";
 import CalmLoader from "@/components/CalmLoader";
 import Button from "@/components/Button";
-import Toggle from "@/components/Toggle";
 import SelectCard from "@/components/practice/SelectCard";
 import PhraseDisplay from "@/components/practice/PhraseDisplay";
-import Avatar from "@/components/quickcalm/Avatar";
-import BreathingVisual from "@/components/quickcalm/BreathingVisual";
+import ExercisePlayer from "@/components/quickcalm/ExercisePlayer";
 import CheckinForm from "@/components/quickcalm/CheckinForm";
 
 type Stage =
@@ -34,6 +31,7 @@ function QuickCalmContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState(true);
   const [exercise, setExercise] = useState<QuickCalmDefinition | null>(null);
+  const [runId, setRunId] = useState(0);
   const [affirmations, setAffirmations] = useState<SavedAffirmationRow[]>([]);
   const [viewingAffirmation, setViewingAffirmation] = useState<TextBankEntry | null>(null);
   const [checkinSubmitting, setCheckinSubmitting] = useState(false);
@@ -58,7 +56,7 @@ function QuickCalmContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  const { step } = useQuickCalmPlayer(exercise?.steps ?? [], soundOn, () => {
+  function handleExerciseDone() {
     if (exercise && userId) {
       const supabase = createClient();
       void supabase.from("quick_calm_sessions").insert({
@@ -67,10 +65,16 @@ function QuickCalmContent() {
       });
     }
     setStage("exercise-done");
-  });
+  }
 
   function startExercise(key: QuickCalmExercise) {
     setExercise(getExercise(key));
+    setRunId((r) => r + 1);
+    setStage("exercise");
+  }
+
+  function replayExercise() {
+    setRunId((r) => r + 1);
     setStage("exercise");
   }
 
@@ -126,24 +130,15 @@ function QuickCalmContent() {
     );
   }
 
-  if (stage === "exercise" && exercise && step) {
+  if (stage === "exercise" && exercise) {
     return (
-      <div className="fade-in flex w-full max-w-md flex-col items-center text-center">
-        <div className="mb-2 flex w-full items-center justify-between">
-          <span className="text-sm text-ink-faint">{exercise.title}</span>
-          <Toggle checked={soundOn} onChange={setSoundOn} label="Sound" />
-        </div>
-
-        <Avatar />
-
-        <div className="mt-4">
-          <BreathingVisual visual={exercise.visual} step={step} />
-        </div>
-
-        <p key={step.text} className="fade-in mt-8 min-h-16 text-lg text-ink">
-          {step.text}
-        </p>
-      </div>
+      <ExercisePlayer
+        key={runId}
+        exercise={exercise}
+        soundOn={soundOn}
+        onSoundChange={setSoundOn}
+        onDone={handleExerciseDone}
+      />
     );
   }
 
@@ -156,13 +151,16 @@ function QuickCalmContent() {
         <p className="mt-3 text-ink-soft">You can return to this anytime.</p>
 
         <div className="mt-8 flex flex-col gap-3">
+          <Button onClick={replayExercise} className="w-full">
+            Do it again
+          </Button>
           {exercise.key === "third_eye_awareness" && (
             <Button variant="secondary" onClick={() => setStage("checkin")} className="w-full">
               Want to note what happened?
             </Button>
           )}
-          <Button onClick={() => setStage("hub")} className="w-full">
-            Close
+          <Button variant="secondary" onClick={() => setStage("hub")} className="w-full">
+            Try something else
           </Button>
           <Button variant="ghost" onClick={() => router.push("/home")} className="w-full">
             Back home

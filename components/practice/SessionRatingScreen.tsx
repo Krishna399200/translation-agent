@@ -10,11 +10,13 @@ export default function SessionRatingScreen({
   onSubmit,
   onSkip,
   submitting,
+  skipLabel = "Skip reflection",
 }: {
   stats: SummaryStat[];
   onSubmit: (rating: number) => void;
   onSkip: () => void;
   submitting: boolean;
+  skipLabel?: string;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -68,7 +70,7 @@ export default function SessionRatingScreen({
 
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs text-ink-faint">
         <button onClick={onSkip} className="underline decoration-dotted underline-offset-4 hover:text-ink-soft">
-          Skip reflection
+          {skipLabel}
         </button>
       </div>
     </div>

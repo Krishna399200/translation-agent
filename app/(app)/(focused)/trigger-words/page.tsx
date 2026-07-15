@@ -18,8 +18,9 @@ import BreathingTransition from "@/components/practice/BreathingTransition";
 import LiveWaveform from "@/components/practice/LiveWaveform";
 import TriggerWordDisplay from "@/components/practice/TriggerWordDisplay";
 import SessionRatingScreen from "@/components/practice/SessionRatingScreen";
+import CompletionScreen from "@/components/practice/CompletionScreen";
 
-type Stage = "loading" | "categories" | "words" | "breathing" | "practicing" | "rating" | "saving" | "done";
+type Stage = "loading" | "categories" | "words" | "breathing" | "practicing" | "saving" | "done" | "rating" | "rated";
 
 type PracticeWord = {
   word: string;
@@ -35,13 +36,13 @@ export default function TriggerWordsPage() {
   const [newWord, setNewWord] = useState("");
   const [categoryKey, setCategoryKey] = useState<string | null>(null);
   const [activeWord, setActiveWord] = useState<PracticeWord | null>(null);
-  const [pendingRecording, setPendingRecording] = useState<{ blob: Blob; durationSeconds: number } | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState("");
 
   const { tone432, setTone432, noPressureMode } = useSettings();
   const recorder = useAudioRecorder();
   const elapsed = useElapsedSeconds(stage === "practicing");
-  const save = useSessionSave(userId ?? "");
+  const { save, updateRating } = useSessionSave(userId ?? "");
 
   const groups = activeWord
     ? [
@@ -52,14 +53,32 @@ export default function TriggerWordsPage() {
     : [];
   const totalWords = groups.reduce((sum, g) => sum + g.words.length, 0);
 
+  async function finishPracticing(result: { blob: Blob; durationSeconds: number }) {
+    if (!userId || !activeWord) return;
+    setStage("saving");
+    setSaveError("");
+
+    const { error, sessionId: newId } = await save({
+      blob: result.blob,
+      durationSeconds: result.durationSeconds,
+      practiceType: "trigger_words",
+      contentRef: activeWord.word,
+      selfRating: null,
+    });
+
+    if (error) {
+      setSaveError(error);
+      setStage("practicing");
+      return;
+    }
+
+    setSessionId(newId);
+    setStage("done");
+  }
+
   const activeIndex = usePhraseHighlighter(totalWords, "slow", stage === "practicing", async () => {
     const result = await recorder.stop();
-    setPendingRecording(result);
-    if (noPressureMode) {
-      await persist(result, null);
-    } else {
-      setStage("rating");
-    }
+    await finishPracticing(result);
   });
 
   useEffect(() => {
@@ -102,8 +121,12 @@ export default function TriggerWordsPage() {
   }
 
   function selectWord(word: string, levels?: [string, string, string]) {
-    const graduated = levels ?? Object.values(graduatedPhrasesFor(word)) as [string, string, string];
+    const graduated = levels ?? (Object.values(graduatedPhrasesFor(word)) as [string, string, string]);
     setActiveWord({ word, levels: graduated });
+    setStage("breathing");
+  }
+
+  function handleReplay() {
     setStage("breathing");
   }
 
@@ -113,26 +136,14 @@ export default function TriggerWordsPage() {
     else setStage("words");
   }
 
-  async function persist(result: { blob: Blob; durationSeconds: number }, rating: number | null) {
-    if (!userId || !activeWord) return;
-    setStage("saving");
-    setSaveError("");
-
-    const { error } = await save({
-      blob: result.blob,
-      durationSeconds: result.durationSeconds,
-      practiceType: "trigger_words",
-      contentRef: activeWord.word,
-      selfRating: rating,
-    });
-
+  async function handleRatingSubmit(rating: number) {
+    if (!sessionId) return;
+    const { error } = await updateRating(sessionId, rating);
     if (error) {
       setSaveError(error);
-      setStage(noPressureMode ? "practicing" : "rating");
       return;
     }
-
-    setStage("done");
+    setStage("rated");
   }
 
   if (stage === "loading") return <CalmLoader />;
@@ -236,39 +247,39 @@ export default function TriggerWordsPage() {
     );
   }
 
-  if (stage === "rating") {
+  if (stage === "saving") return <CalmLoader label="Saving your progress..." />;
+
+  if (stage === "done") {
     return (
       <>
-        <SessionRatingScreen
-          stats={[
-            { label: "Duration", value: pendingRecording ? formatTime(Math.round(pendingRecording.durationSeconds)) : "—" },
-            { label: "Word practiced", value: activeWord?.word ?? "—" },
-          ]}
-          onSubmit={(rating) => pendingRecording && persist(pendingRecording, rating)}
-          onSkip={() => pendingRecording && persist(pendingRecording, null)}
-          submitting={false}
+        <CompletionScreen
+          onReplay={handleReplay}
+          onRate={!noPressureMode ? () => setStage("rating") : undefined}
+          noPressureMode={noPressureMode}
         />
         {saveError && <p className="mt-4 text-center text-sm text-mood-difficult">{saveError}</p>}
       </>
     );
   }
 
-  if (stage === "saving") return <CalmLoader label="Saving your progress..." />;
+  if (stage === "rating") {
+    return (
+      <>
+        <SessionRatingScreen
+          stats={[{ label: "Word practiced", value: activeWord?.word ?? "—" }]}
+          onSubmit={handleRatingSubmit}
+          onSkip={() => setStage("done")}
+          submitting={false}
+          skipLabel="Never mind"
+        />
+        {saveError && <p className="mt-4 text-center text-sm text-mood-difficult">{saveError}</p>}
+      </>
+    );
+  }
 
-  return (
-    <div className="fade-in w-full max-w-sm text-center">
-      <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold text-ink">
-        {noPressureMode ? "Well done." : "That took courage."}
-      </h2>
-      <p className="mt-3 text-ink-soft">{noPressureMode ? "See you next time." : "Every rep counts, even the hard ones."}</p>
-      <div className="mt-8 flex flex-col gap-3">
-        <Button onClick={() => router.push("/progress")} className="w-full">
-          Listen back
-        </Button>
-        <Button variant="secondary" onClick={() => router.push("/home")} className="w-full">
-          Back home
-        </Button>
-      </div>
-    </div>
-  );
+  if (stage === "rated") {
+    return <CompletionScreen onReplay={handleReplay} noPressureMode={false} />;
+  }
+
+  return <CalmLoader />;
 }

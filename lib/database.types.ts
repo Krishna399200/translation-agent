@@ -85,6 +85,7 @@ export type Database = {
           pace_tag: string;
           length_tag: string;
           category: string;
+          difficulty: string;
           created_at: string;
         };
         Insert: {
@@ -93,6 +94,7 @@ export type Database = {
           pace_tag: string;
           length_tag: string;
           category: string;
+          difficulty?: string;
           created_at?: string;
         };
         Update: {
@@ -101,6 +103,7 @@ export type Database = {
           pace_tag?: string;
           length_tag?: string;
           category?: string;
+          difficulty?: string;
           created_at?: string;
         };
         Relationships: [];
