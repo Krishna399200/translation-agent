@@ -21,6 +21,10 @@ export type Database = {
           tone_432hz_enabled: boolean;
           no_pressure_mode: boolean;
           last_journal_prompt_at: string | null;
+          mentor_name: string;
+          mentor_feedback_enabled: boolean;
+          mentor_voice_enabled: boolean;
+          mentor_onboarded_at: string | null;
         };
         Insert: {
           id: string;
@@ -30,6 +34,10 @@ export type Database = {
           tone_432hz_enabled?: boolean;
           no_pressure_mode?: boolean;
           last_journal_prompt_at?: string | null;
+          mentor_name?: string;
+          mentor_feedback_enabled?: boolean;
+          mentor_voice_enabled?: boolean;
+          mentor_onboarded_at?: string | null;
         };
         Update: {
           id?: string;
@@ -39,6 +47,10 @@ export type Database = {
           tone_432hz_enabled?: boolean;
           no_pressure_mode?: boolean;
           last_journal_prompt_at?: string | null;
+          mentor_name?: string;
+          mentor_feedback_enabled?: boolean;
+          mentor_voice_enabled?: boolean;
+          mentor_onboarded_at?: string | null;
         };
         Relationships: [];
       };
@@ -282,6 +294,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      mentor_reflections: {
+        Row: {
+          id: string;
+          user_id: string;
+          session_id: string | null;
+          practice_type: string | null;
+          reflection_text: string | null;
+          flagged_for_safety: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          session_id?: string | null;
+          practice_type?: string | null;
+          reflection_text?: string | null;
+          flagged_for_safety?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          session_id?: string | null;
+          practice_type?: string | null;
+          reflection_text?: string | null;
+          flagged_for_safety?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
   };
 };
@@ -296,3 +338,4 @@ export type QuickCalmSession = Database["public"]["Tables"]["quick_calm_sessions
 export type MomentCheckin = Database["public"]["Tables"]["moment_checkins"]["Row"];
 export type SavedAffirmation = Database["public"]["Tables"]["user_saved_affirmations"]["Row"];
 export type DailyCheckin = Database["public"]["Tables"]["daily_checkins"]["Row"];
+export type MentorReflection = Database["public"]["Tables"]["mentor_reflections"]["Row"];

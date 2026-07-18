@@ -67,6 +67,15 @@ export function ProgressIcon({ className }: IconProps) {
   );
 }
 
+export function MentorIcon({ className }: IconProps) {
+  return (
+    <svg {...common} className={className} stroke="currentColor">
+      <path d="M12 3.5c3.5 2 5.5 5 5.5 8.2 0 3.7-2.5 6.8-5.5 8.8-3-2-5.5-5.1-5.5-8.8 0-3.2 2-6.2 5.5-8.2Z" />
+      <path d="M12 8.5v9.5M12 12.5c-1.4-1.6-3-2-4.2-1.8M12 15c1.6-1.2 3.2-1.3 4.2-.9" />
+    </svg>
+  );
+}
+
 export function SettingsIcon({ className }: IconProps) {
   return (
     <svg {...common} className={className} stroke="currentColor">

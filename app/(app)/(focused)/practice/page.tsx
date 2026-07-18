@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAudioRecorder } from "@/lib/useAudioRecorder";
@@ -9,6 +9,7 @@ import { useSessionSave } from "@/lib/useSessionSave";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useElapsedSeconds, formatTime } from "@/lib/useElapsedSeconds";
 import { pickText, rememberShownText, suggestDifficulty, type LengthTag, type Difficulty } from "@/lib/textBank";
+import { generatePassage } from "@/lib/generatePassage";
 import { PHRASE, type Pace } from "@/lib/phrase";
 import CalmLoader from "@/components/CalmLoader";
 import Button from "@/components/Button";
@@ -45,6 +46,7 @@ function PracticeContent() {
   const [saveError, setSaveError] = useState("");
   const [content, setContent] = useState<{ id: string; text: string }>({ id: PHRASE.id, text: PHRASE.text });
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const pendingContentRef = useRef<Promise<{ id: string; text: string }> | null>(null);
 
   const { tone432, setTone432, noPressureMode } = useSettings();
   const recorder = useAudioRecorder();
@@ -127,23 +129,37 @@ function PracticeContent() {
     setStage("setup");
   }
 
-  async function handleBeginSetup() {
-    if (!isJournal && userId) {
-      const picked = await pickText(createClient(), userId, category, length, difficulty);
-      setContent(picked);
-    }
+  function pickContent(): Promise<{ id: string; text: string }> {
+    if (!userId) return Promise.resolve(content);
+    // Real-time Gemini generation, tried first; falls back instantly to the
+    // curated pool on any failure (no key configured, network error, etc).
+    return generatePassage(category, length, difficulty, pace).then(
+      (generated) => generated ?? pickText(createClient(), userId, category, length, difficulty)
+    );
+  }
+
+  function beginContentFetch() {
+    // Kick off the fetch immediately but don't block the tap — it resolves
+    // in the background while the breathing transition plays, so it never
+    // feels like it's waiting on a network call.
+    pendingContentRef.current = pickContent();
+  }
+
+  function handleBeginSetup() {
+    if (!isJournal) beginContentFetch();
     setStage("breathing");
   }
 
-  async function handleReplay() {
-    if (!isJournal && userId) {
-      const picked = await pickText(createClient(), userId, category, length, difficulty);
-      setContent(picked);
-    }
+  function handleReplay() {
+    if (!isJournal) beginContentFetch();
     setStage("breathing");
   }
 
   async function handleBreathingDone() {
+    if (!isJournal && pendingContentRef.current) {
+      const picked = await pendingContentRef.current;
+      setContent(picked);
+    }
     const started = await recorder.start();
     if (started) setStage("recording");
     else setStage("setup");

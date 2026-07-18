@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/Logo";
-import { PracticeIcon, MantraIcon, SoundIcon, WordsIcon, ScenarioIcon, ProgressIcon, SettingsIcon } from "@/components/nav/icons";
+import { PracticeIcon, MantraIcon, SoundIcon, WordsIcon, ScenarioIcon, ProgressIcon, MentorIcon, SettingsIcon } from "@/components/nav/icons";
 
 const ITEMS = [
   { href: "/practice", label: "Practice", Icon: PracticeIcon },
@@ -12,6 +12,7 @@ const ITEMS = [
   { href: "/trigger-words", label: "Words", Icon: WordsIcon },
   { href: "/scenarios", label: "Moments", Icon: ScenarioIcon },
   { href: "/progress", label: "Progress", Icon: ProgressIcon },
+  { href: "/mentor", label: "Mentor", Icon: MentorIcon },
   { href: "/settings", label: "Settings", Icon: SettingsIcon },
 ];
 

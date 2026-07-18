@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("tone_432hz_enabled, no_pressure_mode")
+    .select("tone_432hz_enabled, no_pressure_mode, mentor_feedback_enabled, mentor_voice_enabled")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -24,6 +24,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       initial={{
         tone432: profile.tone_432hz_enabled ?? false,
         noPressureMode: profile.no_pressure_mode ?? false,
+        mentorFeedbackEnabled: profile.mentor_feedback_enabled ?? true,
+        mentorVoiceEnabled: profile.mentor_voice_enabled ?? true,
       }}
     >
       {children}

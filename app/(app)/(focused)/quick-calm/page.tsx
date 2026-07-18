@@ -11,6 +11,8 @@ import SelectCard from "@/components/practice/SelectCard";
 import PhraseDisplay from "@/components/practice/PhraseDisplay";
 import ExercisePlayer from "@/components/quickcalm/ExercisePlayer";
 import CheckinForm from "@/components/quickcalm/CheckinForm";
+import CrisisResourceCard from "@/components/mentor/CrisisResourceCard";
+import { screenForCrisisLanguage } from "@/lib/mentor/safety";
 
 type Stage =
   | "loading"
@@ -19,6 +21,7 @@ type Stage =
   | "exercise-done"
   | "checkin"
   | "checkin-done"
+  | "checkin-crisis"
   | "affirmations"
   | "affirmation-view";
 
@@ -95,11 +98,29 @@ function QuickCalmContent() {
     if (!userId) return;
     setCheckinSubmitting(true);
     const supabase = createClient();
-    await supabase.from("moment_checkins").insert({
-      user_id: userId,
-      sentiment,
-      note: note || null,
-    });
+
+    const { data: inserted } = await supabase
+      .from("moment_checkins")
+      .insert({ user_id: userId, sentiment, note: note || null })
+      .select("id")
+      .single();
+
+    // Safety guardrail runs before anything AI-adjacent touches this note —
+    // see lib/mentor/safety.ts. The check-in itself is still saved either
+    // way; their words aren't discarded, just not routed to feedback.
+    if (screenForCrisisLanguage(note)) {
+      await supabase.from("mentor_reflections").insert({
+        user_id: userId,
+        session_id: inserted?.id ?? null,
+        practice_type: "moment_checkin",
+        reflection_text: null,
+        flagged_for_safety: true,
+      });
+      setCheckinSubmitting(false);
+      setStage("checkin-crisis");
+      return;
+    }
+
     setCheckinSubmitting(false);
     setStage("checkin-done");
   }
@@ -189,6 +210,10 @@ function QuickCalmContent() {
         </div>
       </div>
     );
+  }
+
+  if (stage === "checkin-crisis") {
+    return <CrisisResourceCard onClose={() => setStage("hub")} />;
   }
 
   if (stage === "affirmations") {
