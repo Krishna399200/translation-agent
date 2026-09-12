@@ -135,6 +135,11 @@ secondary, optional link that updates the already-saved row via
 Foundations/Trigger Words share `practice_sessions` (`lib/useSessionSave.ts`,
 tagged by `practice_type`); Scenarios has its own `scenario_sessions` table
 (`lib/useScenarioSave.ts`) since its shape differs enough not to force-fit.
+Both tables feed the same Progress view, streak, and badge calculations —
+`lib/unifiedSessions.ts` normalizes a row from either table into one shared
+shape for display, so a scenario recording is just as visible, playable,
+deletable, and streak-counted as any other practice session, without the
+two tables actually merging.
 
 ### Reading & scenario content pipeline
 

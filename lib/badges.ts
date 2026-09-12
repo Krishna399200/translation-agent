@@ -3,13 +3,16 @@ import type { PracticeSession } from "@/lib/database.types";
 
 export type Badge = { key: string; title: string; description: string };
 
-export function computeBadges(sessions: PracticeSession[]): Badge[] {
+export function computeBadges(sessions: PracticeSession[], additionalTimestamps: string[] = []): Badge[] {
   const badges: Badge[] = [];
 
   const byType = (type: PracticeSession["practice_type"]) =>
     sessions.filter((s) => s.practice_type === type);
 
-  const overallStreak = computeStreak(sessions.map((s) => s.created_at));
+  // Scenario ("Practice a Moment") sessions live in their own table and
+  // don't have a practice_type, but they still count as showing up — so the
+  // overall streak (unlike the type-specific badges below) considers them.
+  const overallStreak = computeStreak([...sessions.map((s) => s.created_at), ...additionalTimestamps]);
   if (overallStreak >= 5) {
     badges.push({
       key: "consistency_master",

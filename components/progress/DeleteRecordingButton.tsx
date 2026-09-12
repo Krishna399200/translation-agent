@@ -7,9 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 export default function DeleteRecordingButton({
   sessionId,
   audioPath,
+  table = "practice_sessions",
 }: {
   sessionId: string;
   audioPath: string;
+  table?: "practice_sessions" | "scenario_sessions";
 }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -21,7 +23,7 @@ export default function DeleteRecordingButton({
     setError(false);
     const supabase = createClient();
     await supabase.storage.from("recordings").remove([audioPath]);
-    const { error: deleteError } = await supabase.from("practice_sessions").delete().eq("id", sessionId);
+    const { error: deleteError } = await supabase.from(table).delete().eq("id", sessionId);
 
     if (deleteError) {
       setDeleting(false);

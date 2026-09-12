@@ -9,20 +9,22 @@ import WeeklyHeatmap from "@/components/progress/WeeklyHeatmap";
 import BadgeCard from "@/components/progress/BadgeCard";
 import TypeFilterTabs, { type TypeFilter } from "@/components/progress/TypeFilterTabs";
 import { computeBadges } from "@/lib/badges";
-import { describeSession } from "@/lib/describeSession";
 import type { PracticeSession } from "@/lib/database.types";
+import type { UnifiedSession } from "@/lib/unifiedSessions";
 
 export default function ProgressView({
   sessions,
+  practiceSessions,
   signedUrls,
 }: {
-  sessions: PracticeSession[];
+  sessions: UnifiedSession[];
+  practiceSessions: PracticeSession[];
   signedUrls: Record<string, string>;
 }) {
   const [filter, setFilter] = useState<TypeFilter>("all");
 
   const filtered = useMemo(
-    () => (filter === "all" ? sessions : sessions.filter((s) => s.practice_type === filter)),
+    () => (filter === "all" ? sessions : sessions.filter((s) => s.kind === filter)),
     [sessions, filter]
   );
 
@@ -35,13 +37,20 @@ export default function ProgressView({
   const hasComparison = chronological.length >= 2;
 
   const trendPoints = chronological
-    .filter((s): s is PracticeSession & { self_rating: number } => s.self_rating !== null)
+    .filter((s): s is UnifiedSession & { self_rating: number } => s.self_rating !== null)
     .map((s) => ({ date: s.created_at, rating: s.self_rating }));
 
-  const journalEntries = sessions.filter((s) => s.practice_type === "journal");
-  const recordingsList = mostRecentFirst.filter((s) => s.practice_type !== "journal");
+  const journalEntries = sessions.filter((s) => s.kind === "journal");
+  const recordingsList = mostRecentFirst.filter((s) => s.kind !== "journal");
 
-  const badges = useMemo(() => computeBadges(sessions), [sessions]);
+  const badges = useMemo(
+    () =>
+      computeBadges(
+        practiceSessions,
+        sessions.filter((s) => s.table === "scenario_sessions").map((s) => s.created_at)
+      ),
+    [practiceSessions, sessions]
+  );
 
   if (sessions.length === 0) {
     return (
@@ -121,7 +130,7 @@ export default function ProgressView({
                   <p className="text-sm font-medium text-ink">
                     {new Date(s.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </p>
-                  <DeleteRecordingButton sessionId={s.id} audioPath={s.audio_url} />
+                  <DeleteRecordingButton sessionId={s.id} audioPath={s.audio_url} table={s.table} />
                 </div>
                 {signedUrls[s.audio_url] && (
                   <div className="mt-3">
@@ -146,7 +155,7 @@ export default function ProgressView({
                   <p className="text-sm font-medium text-ink">
                     {new Date(s.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                   </p>
-                  <p className="text-xs text-ink-faint">{describeSession(s)}</p>
+                  <p className="text-xs text-ink-faint">{s.label}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   {s.self_rating !== null && (
@@ -154,7 +163,7 @@ export default function ProgressView({
                       Felt {s.self_rating}/5
                     </span>
                   )}
-                  <DeleteRecordingButton sessionId={s.id} audioPath={s.audio_url} />
+                  <DeleteRecordingButton sessionId={s.id} audioPath={s.audio_url} table={s.table} />
                 </div>
               </div>
               {signedUrls[s.audio_url] && (

@@ -40,13 +40,14 @@ export default async function HomePage() {
 
   if (!profile) redirect("/onboarding");
 
-  const { data: sessions } = await supabase
-    .from("practice_sessions")
-    .select("created_at, self_rating")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: sessions }, { data: scenarioSessions }] = await Promise.all([
+    supabase.from("practice_sessions").select("created_at, self_rating").eq("user_id", user.id),
+    supabase.from("scenario_sessions").select("created_at, self_rating").eq("user_id", user.id),
+  ]);
 
-  const list = sessions ?? [];
+  const list = [...(sessions ?? []), ...(scenarioSessions ?? [])].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
   const timestamps = list.map((s) => s.created_at);
   const streak = computeStreak(timestamps);
   const totalReps = list.length;

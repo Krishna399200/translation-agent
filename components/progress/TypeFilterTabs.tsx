@@ -1,6 +1,6 @@
 import type { PracticeType } from "@/lib/database.types";
 
-export type TypeFilter = "all" | PracticeType;
+export type TypeFilter = "all" | PracticeType | "scenario";
 
 const OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -8,6 +8,7 @@ const OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: "mantra", label: "Mantra" },
   { value: "varnamala", label: "Sound Foundations" },
   { value: "trigger_words", label: "Trigger Words" },
+  { value: "scenario", label: "Practice a Moment" },
 ];
 
 export default function TypeFilterTabs({
