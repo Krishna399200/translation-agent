@@ -56,7 +56,11 @@ function PracticeContent() {
   const words = isJournal ? [] : content.text.split(" ");
 
   async function finishRecording(result: { blob: Blob; durationSeconds: number }) {
-    if (!isJournal && userId) rememberShownText(userId, content.id);
+    // PHRASE.id is the static offline fallback, not a real text_bank row —
+    // remembering it here would poison the "exclude recently shown" filter
+    // in pickText, since that column is uuid-typed and PHRASE.id isn't a
+    // valid uuid.
+    if (!isJournal && userId && content.id !== PHRASE.id) rememberShownText(userId, content.id);
     if (!userId) return;
 
     setStage("saving");

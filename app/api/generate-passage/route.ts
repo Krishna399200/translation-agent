@@ -99,7 +99,13 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errBody = await response.text().catch(() => "");
       console.error("[generate-passage] Gemini HTTP error", response.status, errBody.slice(0, 400));
-      return NextResponse.json({ error: "Gemini request failed." }, { status: 502 });
+      // Echoed to the client (never the key itself, just Gemini's own error
+      // body) so the real reason shows up in the browser console — there's
+      // otherwise no way to see this without access to Vercel's server logs.
+      return NextResponse.json(
+        { error: `Gemini request failed (HTTP ${response.status}): ${errBody.slice(0, 300) || "(empty body)"}` },
+        { status: 502 }
+      );
     }
 
     const data = await response.json();
@@ -107,7 +113,10 @@ export async function POST(request: Request) {
     const text = candidate?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
     if (!text.trim()) {
       console.error("[generate-passage] empty text", candidate?.finishReason);
-      return NextResponse.json({ error: "Empty response from Gemini." }, { status: 502 });
+      return NextResponse.json(
+        { error: `Empty response from Gemini (finishReason: ${candidate?.finishReason ?? "unknown"}).` },
+        { status: 502 }
+      );
     }
 
     let parsed: unknown;
@@ -123,7 +132,8 @@ export async function POST(request: Request) {
     passages = parsed.filter((p): p is string => typeof p === "string" && p.trim().length > 0).map((p) => p.trim());
   } catch (err) {
     console.error("[generate-passage] request errored", err);
-    return NextResponse.json({ error: "Gemini request errored." }, { status: 502 });
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Gemini request errored: ${message}` }, { status: 502 });
   }
 
   const [min, max] = WORD_RANGE[length];
@@ -148,7 +158,10 @@ export async function POST(request: Request) {
 
   if (insertError || !inserted || inserted.length === 0) {
     console.error("[generate-passage] insert failed", insertError);
-    return NextResponse.json({ error: "Could not save the generated passages." }, { status: 500 });
+    return NextResponse.json(
+      { error: `Could not save the generated passages: ${insertError?.message ?? "no rows returned"}` },
+      { status: 500 }
+    );
   }
 
   const pick = inserted[Math.floor(Math.random() * inserted.length)];

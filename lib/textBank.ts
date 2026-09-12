@@ -28,11 +28,19 @@ export function suggestDifficulty(readingSessionCount: number): Difficulty {
 }
 
 const RECENT_KEY = (userId: string) => `fluent_recent_texts_${userId}`;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function getRecentIds(userId: string): string[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY(userId)) ?? "[]");
+    const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_KEY(userId)) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    // text_bank.id is uuid-typed; a non-uuid value here (e.g. an older
+    // browser that still has the static PHRASE.id fallback stored from
+    // before that was excluded from rememberShownText) would make every
+    // query below error out on an invalid uuid cast instead of just
+    // returning fewer candidates.
+    return parsed.filter((id): id is string => typeof id === "string" && UUID_RE.test(id));
   } catch {
     return [];
   }
