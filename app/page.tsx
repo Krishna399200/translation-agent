@@ -11,11 +11,15 @@ export default async function RootPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (profileError) {
+    throw new Error(`Couldn't load your profile (${profileError.message}).`);
+  }
 
   redirect(profile ? "/home" : "/onboarding");
 }

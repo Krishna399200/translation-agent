@@ -14,19 +14,28 @@ export default function DeleteRecordingButton({
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState(false);
 
   async function handleDelete() {
     setDeleting(true);
+    setError(false);
     const supabase = createClient();
     await supabase.storage.from("recordings").remove([audioPath]);
-    await supabase.from("practice_sessions").delete().eq("id", sessionId);
+    const { error: deleteError } = await supabase.from("practice_sessions").delete().eq("id", sessionId);
+
+    if (deleteError) {
+      setDeleting(false);
+      setError(true);
+      return;
+    }
+
     router.refresh();
   }
 
   if (confirming) {
     return (
       <div className="flex items-center gap-2 text-xs">
-        <span className="text-ink-soft">Remove this recording?</span>
+        <span className="text-ink-soft">{error ? "Couldn't remove that — try again?" : "Remove this recording?"}</span>
         <button
           onClick={handleDelete}
           disabled={deleting}
