@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSettings } from "@/lib/settings/SettingsContext";
 
 export type RecorderStatus = "idle" | "requesting" | "recording" | "stopped" | "error";
 
 export function useAudioRecorder() {
   const [status, setStatus] = useState<RecorderStatus>("idle");
+  const { setRecordingActive } = useSettings();
   const [error, setError] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -74,6 +76,11 @@ export function useAudioRecorder() {
     chunksRef.current = [];
     resultRef.current = null;
   }, []);
+
+  useEffect(() => {
+    setRecordingActive(status === "recording");
+    return () => setRecordingActive(false);
+  }, [status, setRecordingActive]);
 
   return { status, error, stream, start, stop, reset };
 }

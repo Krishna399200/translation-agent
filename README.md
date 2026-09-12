@@ -266,9 +266,17 @@ not the weekly voice journal, until that changes.
 
 ## Settings
 
-- **432Hz calming tone** and **no-pressure mode** (skips the post-session
-  sentiment check-in) are stored on the user's profile and apply across every
-  practice module, not just the screen they were toggled on.
+- **432Hz calming tone** plays continuously across the whole app while
+  enabled — mounted once at the root (`components/AmbientTone.tsx`, inside
+  `app/(app)/layout.tsx`), not per-screen — and ducks out automatically
+  while any recorder is capturing audio (`useAudioRecorder` reports this
+  into `SettingsContext.recordingActive`), resuming once you stop. Browsers
+  suspend a freshly created `AudioContext` until a user gesture; `useTone432`
+  retries `resume()` on the next click/keypress so it starts as soon as it's
+  allowed to.
+- **No-pressure mode** (skips the post-session sentiment check-in) is
+  stored on the user's profile and applies across every practice module,
+  not just the screen it was toggled on.
 - **Mentor feedback** and **Mentor voice-over** — see AI Mentor, above.
 
 ## Deploying

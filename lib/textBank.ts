@@ -67,7 +67,18 @@ export async function pickText(
     if (excludeRecent && recentIds.length > 0) {
       query = query.not("id", "in", `(${recentIds.join(",")})`);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) {
+      // A real query error (most likely a missing text_bank column — the
+      // difficulty tiers and scenario_type were added in
+      // migration_005/migration_007) is not the same as "no rows matched",
+      // but this cascade would otherwise treat it identically and land on
+      // the same static PHRASE fallback every single time. Log it loudly
+      // instead of hiding it behind an empty array.
+      console.error(
+        `[pickText] text_bank query failed (${error.message}) — check every supabase/migration_*.sql has been run.`
+      );
+    }
     return (data ?? []) as TextBankEntry[];
   }
 
@@ -109,15 +120,25 @@ export async function pickScenarioPassage(
     query = query.not("id", "in", `(${recentIds.join(",")})`);
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) {
+    console.error(
+      `[pickScenarioPassage] text_bank query failed (${error.message}) — check every supabase/migration_*.sql has been run.`
+    );
+  }
   let candidates = (data ?? []) as TextBankEntry[];
 
   if (candidates.length === 0) {
-    const { data: fallbackData } = await supabase
+    const { data: fallbackData, error: fallbackError } = await supabase
       .from("text_bank")
       .select("*")
       .eq("category", "real_life_scenarios")
       .eq("scenario_type", scenarioType);
+    if (fallbackError) {
+      console.error(
+        `[pickScenarioPassage] text_bank fallback query failed (${fallbackError.message}) — check every supabase/migration_*.sql has been run.`
+      );
+    }
     candidates = (fallbackData ?? []) as TextBankEntry[];
   }
 

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SettingsProvider } from "@/lib/settings/SettingsContext";
+import AmbientTone from "@/components/AmbientTone";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -41,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         mentorVoiceEnabled: profile.mentor_voice_enabled ?? true,
       }}
     >
+      <AmbientTone />
       {children}
     </SettingsProvider>
   );

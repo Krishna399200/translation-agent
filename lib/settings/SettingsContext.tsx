@@ -15,6 +15,9 @@ type SettingsContextValue = Settings & {
   setNoPressureMode: (value: boolean) => void;
   setMentorFeedbackEnabled: (value: boolean) => void;
   setMentorVoiceEnabled: (value: boolean) => void;
+  /** Ephemeral, not persisted — true whenever any recorder on the current page is capturing audio, so the ambient 432Hz tone can duck out of the way instead of bleeding into the recording. */
+  recordingActive: boolean;
+  setRecordingActive: (value: boolean) => void;
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -32,6 +35,7 @@ export function SettingsProvider({
   const [noPressureMode, setNoPressureModeState] = useState(initial.noPressureMode);
   const [mentorFeedbackEnabled, setMentorFeedbackEnabledState] = useState(initial.mentorFeedbackEnabled);
   const [mentorVoiceEnabled, setMentorVoiceEnabledState] = useState(initial.mentorVoiceEnabled);
+  const [recordingActive, setRecordingActive] = useState(false);
 
   const persist = useCallback(
     async (
@@ -87,10 +91,12 @@ export function SettingsProvider({
         noPressureMode,
         mentorFeedbackEnabled,
         mentorVoiceEnabled,
+        recordingActive,
         setTone432,
         setNoPressureMode,
         setMentorFeedbackEnabled,
         setMentorVoiceEnabled,
+        setRecordingActive,
       }}
     >
       {children}

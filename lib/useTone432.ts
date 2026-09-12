@@ -29,7 +29,20 @@ export function useTone432(enabled: boolean) {
     oscRef.current = osc;
     gainRef.current = gain;
 
+    // Browsers suspend a freshly created AudioContext until a user gesture
+    // happens — expected the first time this mounts on page load, before
+    // any click. Resume immediately if a gesture already happened, and
+    // catch the next one otherwise so the tone starts as soon as it can.
+    function resume() {
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    }
+    resume();
+    document.addEventListener("pointerdown", resume);
+    document.addEventListener("keydown", resume);
+
     return () => {
+      document.removeEventListener("pointerdown", resume);
+      document.removeEventListener("keydown", resume);
       const now = ctx.currentTime;
       gain.gain.linearRampToValueAtTime(0, now + 0.4);
       setTimeout(() => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTone432 } from "@/lib/useTone432";
 import { useSettings } from "@/lib/settings/SettingsContext";
 
 const DURATION_MS = 5000;
@@ -15,8 +14,6 @@ export default function BreathingTransition({
 }) {
   const { tone432 } = useSettings();
   const [ready, setReady] = useState(false);
-
-  useTone432(tone432);
 
   useEffect(() => {
     const revealTimer = setTimeout(() => setReady(true), 50);

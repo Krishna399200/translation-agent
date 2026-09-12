@@ -20,11 +20,21 @@ export async function generatePassage(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category, length, difficulty, pace }),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      console.error(
+        `[generatePassage] server returned ${response.status}: ${body?.error ?? "(no error detail)"} — falling back to the curated pool.`
+      );
+      return null;
+    }
     const data = await response.json();
-    if (typeof data.id !== "string" || typeof data.text !== "string") return null;
+    if (typeof data.id !== "string" || typeof data.text !== "string") {
+      console.error("[generatePassage] malformed response, falling back to the curated pool:", data);
+      return null;
+    }
     return { id: data.id, text: data.text };
-  } catch {
+  } catch (err) {
+    console.error("[generatePassage] request errored, falling back to the curated pool:", err);
     return null;
   }
 }
