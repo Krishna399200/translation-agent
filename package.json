@@ -1,20 +1,22 @@
 {
-  "name": "translation-agent",
+  "name": "fluent",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:passages": "node --env-file=.env.local scripts/generate-passages.mjs",
+    "generate:quickcalm-audio": "node --env-file=.env.local scripts/generate-quickcalm-audio.mjs"
   },
   "dependencies": {
-    "@google/genai": "^2.8.0",
-    "@netlify/blobs": "^10.7.9",
-    "exceljs": "^4.4.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.58.0",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "wavesurfer.js": "^7.10.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

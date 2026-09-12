@@ -1,0 +1,84 @@
+"use client";
+
+import Link from "next/link";
+import { useSettings } from "@/lib/settings/SettingsContext";
+import Toggle from "@/components/Toggle";
+
+export default function SettingsPage() {
+  const {
+    tone432,
+    setTone432,
+    noPressureMode,
+    setNoPressureMode,
+    mentorFeedbackEnabled,
+    setMentorFeedbackEnabled,
+    mentorVoiceEnabled,
+    setMentorVoiceEnabled,
+  } = useSettings();
+
+  return (
+    <div className="fade-in mx-auto w-full max-w-lg">
+      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-ink">Settings</h1>
+      <p className="mt-1 text-sm text-ink-soft">A few quiet preferences, remembered everywhere you practice.</p>
+
+      <div className="frosted-card mt-6 flex flex-col gap-6 rounded-2xl px-6 py-6">
+        <Toggle
+          checked={tone432}
+          onChange={setTone432}
+          label="432Hz calming tone"
+          description="A soft ambient tone during breathing transitions, across every practice type."
+        />
+        <div className="h-px bg-white/[0.06]" />
+        <Toggle
+          checked={noPressureMode}
+          onChange={setNoPressureMode}
+          label="No-pressure mode"
+          description="Skip the sentiment check-in after each session. You'll just see a simple 'Well done.'"
+        />
+      </div>
+
+      <h2 className="mt-6 text-sm font-medium uppercase tracking-wide text-ink-faint">Mentor</h2>
+      <div className="frosted-card mt-2 flex flex-col gap-6 rounded-2xl px-6 py-6">
+        <Toggle
+          checked={mentorFeedbackEnabled}
+          onChange={setMentorFeedbackEnabled}
+          label="Mentor feedback"
+          description="Your companion reflects on sessions after you save them. Turn off to pause reflections entirely."
+        />
+        <div className="h-px bg-white/[0.06]" />
+        <Toggle
+          checked={mentorVoiceEnabled}
+          onChange={setMentorVoiceEnabled}
+          label="Mentor voice-over"
+          description="Lets you have your companion's notes read aloud with 'Read this aloud.'"
+        />
+      </div>
+
+      <Link
+        href="/mentor?view=about"
+        className="press frosted-card mt-4 flex items-center justify-between rounded-2xl px-6 py-4 hover:border-lavender-500/40"
+      >
+        <div>
+          <p className="text-sm font-semibold text-ink">About your companion</p>
+          <p className="text-xs text-ink-faint">What Mentor is, and isn&apos;t</p>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-lavender-300)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </Link>
+
+      <Link
+        href="/quick-calm?view=affirmations"
+        className="press frosted-card mt-4 flex items-center justify-between rounded-2xl px-6 py-4 hover:border-lavender-500/40"
+      >
+        <div>
+          <p className="text-sm font-semibold text-ink">My Affirmations</p>
+          <p className="text-xs text-ink-faint">Lines you&apos;ve saved from practice</p>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-lavender-300)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </Link>
+    </div>
+  );
+}

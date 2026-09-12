@@ -1,0 +1,89 @@
+[
+  {
+    "key": "physiological_sigh",
+    "title": "Physiological Sigh",
+    "tagline": "For when you need calm right now",
+    "durationLabel": "15–20 sec",
+    "visual": "circle",
+    "steps": [
+      { "text": "Let's take a moment.", "breakSec": 1.0, "phase": "still" },
+      { "text": "Breathe in through your nose.", "breakSec": 2.0, "phase": "in" },
+      { "text": "Now, one more small sip of air, right at the top.", "breakSec": 1.0, "phase": "in" },
+      { "text": "And let it all go... slowly... through your mouth.", "breakSec": 4.0, "phase": "out" },
+      { "text": "Once more.", "breakSec": 0.5, "phase": "still" },
+      { "text": "Breathe in.", "breakSec": 2.0, "phase": "in" },
+      { "text": "A little more air in.", "breakSec": 1.0, "phase": "in" },
+      { "text": "And release.", "breakSec": 4.0, "phase": "out" },
+      { "text": "There. You're here now.", "breakSec": 3.0, "phase": "still" }
+    ]
+  },
+  {
+    "key": "box_breathing",
+    "title": "Box Breathing",
+    "tagline": "For steadying before you speak",
+    "durationLabel": "30–40 sec",
+    "visual": "square",
+    "steps": [
+      { "text": "Let's find a steady rhythm together.", "breakSec": 1.0, "phase": "still" },
+      { "text": "In... two... three... four.", "breakSec": 4.0, "phase": "in" },
+      { "text": "Hold... two... three... four.", "breakSec": 4.0, "phase": "hold" },
+      { "text": "Out... two... three... four.", "breakSec": 4.0, "phase": "out" },
+      { "text": "Hold... two... three... four.", "breakSec": 4.0, "phase": "hold" },
+      { "text": "Once more, with me.", "breakSec": 0.5, "phase": "still" },
+      { "text": "In... two... three... four.", "breakSec": 4.0, "phase": "in" },
+      { "text": "Hold... two... three... four.", "breakSec": 4.0, "phase": "hold" },
+      { "text": "Out... two... three... four.", "breakSec": 4.0, "phase": "out" },
+      { "text": "Hold... two... three... four.", "breakSec": 4.0, "phase": "hold" },
+      { "text": "Good. Your breath is steady. So are you.", "breakSec": 3.0, "phase": "still" }
+    ]
+  },
+  {
+    "key": "alternate_nostril",
+    "title": "Alternate Nostril Breathing",
+    "tagline": "For a deeper reset",
+    "durationLabel": "~60 sec",
+    "visual": "hands",
+    "steps": [
+      { "text": "For this one, bring your right hand up gently to your nose.", "breakSec": 2.0, "phase": "still", "handSide": "right" },
+      { "text": "Use your thumb to softly close your right nostril.", "breakSec": 2.0, "phase": "still", "handSide": "right" },
+      { "text": "Breathe in through your left nostril, slow and full.", "breakSec": 4.0, "phase": "in", "handSide": "right" },
+      { "text": "Now close both nostrils gently, and pause.", "breakSec": 2.0, "phase": "hold", "handSide": "both" },
+      { "text": "Release your thumb, and breathe out through the right.", "breakSec": 4.0, "phase": "out", "handSide": "left" },
+      { "text": "Now breathe in through the right nostril.", "breakSec": 4.0, "phase": "in", "handSide": "left" },
+      { "text": "Close both again, and pause.", "breakSec": 2.0, "phase": "hold", "handSide": "both" },
+      { "text": "Release, and breathe out through the left.", "breakSec": 4.0, "phase": "out", "handSide": "right" },
+      { "text": "One more round, at your own pace.", "breakSec": 1.0, "phase": "still" },
+      { "text": "In through the left.", "breakSec": 4.0, "phase": "in", "handSide": "right" },
+      { "text": "Pause.", "breakSec": 2.0, "phase": "hold", "handSide": "both" },
+      { "text": "Out through the right.", "breakSec": 4.0, "phase": "out", "handSide": "left" },
+      { "text": "In through the right.", "breakSec": 4.0, "phase": "in", "handSide": "left" },
+      { "text": "Pause.", "breakSec": 2.0, "phase": "hold", "handSide": "both" },
+      { "text": "Out through the left.", "breakSec": 4.0, "phase": "out", "handSide": "right" },
+      { "text": "You can lower your hand now. Notice how quiet your mind feels.", "breakSec": 3.5, "phase": "still" }
+    ]
+  },
+  {
+    "key": "third_eye_awareness",
+    "title": "Third-Eye Body Awareness",
+    "tagline": "For after a hard moment",
+    "durationLabel": "45–60 sec",
+    "visual": "still",
+    "steps": [
+      { "text": "Let's take three deep breaths together, first.", "breakSec": 1.0, "phase": "still" },
+      { "text": "In...", "breakSec": 3.0, "phase": "in" },
+      { "text": "Out...", "breakSec": 3.0, "phase": "out" },
+      { "text": "In...", "breakSec": 3.0, "phase": "in" },
+      { "text": "Out...", "breakSec": 3.0, "phase": "out" },
+      { "text": "In...", "breakSec": 3.0, "phase": "in" },
+      { "text": "Out...", "breakSec": 3.0, "phase": "out" },
+      { "text": "Now, gently bring your attention to the space between your eyebrows.", "breakSec": 3.0, "phase": "still" },
+      { "text": "Just rest your attention there, softly.", "breakSec": 2.0, "phase": "still" },
+      { "text": "Now, notice what's happening in your body right now.", "breakSec": 2.0, "phase": "still" },
+      { "text": "As if you're watching from a small distance, like a quiet observer.", "breakSec": 3.0, "phase": "still" },
+      { "text": "What do you notice?", "breakSec": 3.0, "phase": "still" },
+      { "text": "There's no need to fix it.", "breakSec": 2.0, "phase": "still" },
+      { "text": "Just notice it... and let it pass through you.", "breakSec": 5.0, "phase": "still" },
+      { "text": "You handled something hard today. That matters.", "breakSec": 3.5, "phase": "still" }
+    ]
+  }
+]

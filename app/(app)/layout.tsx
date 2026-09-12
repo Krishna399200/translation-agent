@@ -1,0 +1,34 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { SettingsProvider } from "@/lib/settings/SettingsContext";
+
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tone_432hz_enabled, no_pressure_mode, mentor_feedback_enabled, mentor_voice_enabled")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile) redirect("/onboarding");
+
+  return (
+    <SettingsProvider
+      userId={user.id}
+      initial={{
+        tone432: profile.tone_432hz_enabled ?? false,
+        noPressureMode: profile.no_pressure_mode ?? false,
+        mentorFeedbackEnabled: profile.mentor_feedback_enabled ?? true,
+        mentorVoiceEnabled: profile.mentor_voice_enabled ?? true,
+      }}
+    >
+      {children}
+    </SettingsProvider>
+  );
+}
