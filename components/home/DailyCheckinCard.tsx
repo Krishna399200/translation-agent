@@ -27,12 +27,15 @@ export default function DailyCheckinCard({ userId }: { userId: string }) {
   async function handleSelect(sentiment: number) {
     setSaving(true);
     const supabase = createClient();
-    await supabase.from("daily_checkins").insert({
+    const { error } = await supabase.from("daily_checkins").insert({
       user_id: userId,
       sentiment,
       checkin_date: todayKey(),
     });
     setSaving(false);
+    // 23505 = unique_violation — already checked in today (e.g. another tab
+    // hit the (user_id, checkin_date) constraint first), not a real failure.
+    if (error && error.code !== "23505") return;
     setSaved(true);
     localStorage.setItem(dismissedKey(userId), "true");
   }

@@ -28,15 +28,19 @@ export default function BookmarkButton({ userId, textBankId }: { userId: string;
     setLoading(true);
     const supabase = createClient();
     if (saved) {
-      await supabase
+      const { error } = await supabase
         .from("user_saved_affirmations")
         .delete()
         .eq("user_id", userId)
         .eq("text_bank_id", textBankId);
-      setSaved(false);
+      if (!error) setSaved(false);
     } else {
-      await supabase.from("user_saved_affirmations").insert({ user_id: userId, text_bank_id: textBankId });
-      setSaved(true);
+      const { error } = await supabase
+        .from("user_saved_affirmations")
+        .insert({ user_id: userId, text_bank_id: textBankId });
+      // 23505 = unique_violation — already saved (e.g. a race with another
+      // tab against the (user_id, text_bank_id) constraint), not a failure.
+      if (!error || error.code === "23505") setSaved(true);
     }
     setLoading(false);
   }

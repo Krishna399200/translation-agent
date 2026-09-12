@@ -1,16 +1,48 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
+import CalmLoader from "@/components/CalmLoader";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
   const [name, setName] = useState("");
   const [confidence, setConfidence] = useState(5);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      // A returning-but-already-onboarded user can land here (bookmark, back
+      // button, a stale tab). Send them on instead of showing a form that
+      // would just fail with a duplicate-key error on submit.
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profile) {
+        router.replace("/home");
+        return;
+      }
+
+      setChecking(false);
+    })();
+  }, [router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -28,7 +60,10 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { error } = await supabase.from("profiles").insert({
+    // upsert rather than insert: harmless if a profile row was already
+    // created by a near-simultaneous submit (double-click, two tabs) —
+    // idempotent instead of throwing a duplicate-key error.
+    const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       name: name.trim(),
       baseline_confidence: confidence,
@@ -42,6 +77,14 @@ export default function OnboardingPage() {
 
     router.push("/home");
     router.refresh();
+  }
+
+  if (checking) {
+    return (
+      <main className="bg-focused flex min-h-dvh flex-col items-center justify-center px-6 py-16">
+        <CalmLoader />
+      </main>
+    );
   }
 
   return (
